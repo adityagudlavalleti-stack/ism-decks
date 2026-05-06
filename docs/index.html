@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISM — VIP Deck Questionnaire</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;min-height:100vh}
+
+#lock-screen{position:fixed;inset:0;background:#0e0e0e;z-index:9999;display:flex;align-items:center;justify-content:center}
+#lock-screen.hidden{display:none}
+.lock-box{background:#161616;border-top:3px solid #C9A84C;border-radius:8px;padding:40px 36px;width:100%;max-width:400px;margin:0 16px;text-align:center}
+.lock-title{font-size:22px;font-weight:900;color:#fff;margin-bottom:4px}
+.lock-sub{font-size:12px;color:#555;margin-bottom:28px}
+.lock-input{width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;padding:12px 16px;border-radius:4px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;transition:border-color .2s}
+.lock-input:focus{border-color:#C9A84C}
+.lock-input.error{border-color:#e74c3c;animation:shake .35s ease}
+.lock-btn{margin-top:14px;width:100%;background:#C9A84C;color:#000;border:none;padding:12px;border-radius:4px;font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity .2s}
+.lock-btn:hover{opacity:.85}
+.lock-error{color:#e74c3c;font-size:12px;margin-top:8px;height:16px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.site-header{background:#000;border-bottom:3px solid #C9A84C;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-left .eyebrow{font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:4px}
+.header-left h1{font-size:22px;font-weight:900;color:#fff}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+.btn-gold{background:#C9A84C;color:#000}.btn-gold:hover{opacity:.85}
+.btn-outline{background:transparent;color:#C9A84C;border:1px solid #C9A84C}.btn-outline:hover{background:#1C1507}
+.btn-ghost{background:transparent;color:#888;border:1px solid #333}.btn-ghost:hover{border-color:#555;color:#ccc}
+.btn-danger{background:transparent;color:#e74c3c;border:1px solid #e74c3c}.btn-danger:hover{background:#3a0a0a}
+.btn-sm{padding:6px 10px;font-size:11px}
+
+#view-dashboard.hidden{display:none}
+.stats-bar{display:flex;border-bottom:1px solid #2a2a2a;background:#0e0e0e}
+.stat-item{flex:1;padding:16px 20px;text-align:center;border-right:1px solid #2a2a2a}
+.stat-item:last-child{border-right:none}
+.stat-num{font-size:26px;font-weight:900;line-height:1}
+.stat-label{font-size:10px;letter-spacing:2px;color:#555;text-transform:uppercase;margin-top:4px}
+.stat-total .stat-num{color:#fff}
+.stat-ns .stat-num{color:#555}
+.stat-ip .stat-num{color:#C9A84C}
+.stat-sub .stat-num{color:#27ae60}
+.stat-dl .stat-num{color:#9B59B6}
+.dashboard-main{padding:28px}
+.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin-top:20px}
+.empty-state{text-align:center;padding:60px 20px;color:#555;grid-column:1/-1}
+.empty-icon{font-size:48px;margin-bottom:12px}
+
+.event-card{background:#161616;border:1px solid #2a2a2a;border-radius:6px;padding:18px;transition:border-color .2s,transform .15s}
+.event-card:hover{border-color:#C9A84C;transform:translateY(-2px)}
+.event-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
+.event-card-name{font-size:15px;font-weight:800;color:#fff;line-height:1.3}
+.event-card-date{font-size:11px;color:#555;margin-top:2px}
+.status-badge{padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.s-ns{background:#1a1a1a;color:#555;border:1px solid #333}
+.s-ip{background:#1C1507;color:#C9A84C;border:1px solid #C9A84C}
+.s-sub{background:#071507;color:#27ae60;border:1px solid #27ae60}
+.s-dl{background:#180b28;color:#9B59B6;border:1px solid #9B59B6}
+.progress-bar-wrap{background:#222;border-radius:2px;height:4px;margin-bottom:8px;overflow:hidden}
+.progress-bar-fill{height:100%;background:#C9A84C;border-radius:2px;transition:width .3s}
+.progress-bar-fill.done{background:#27ae60}
+.progress-bar-fill.delivered{background:#9B59B6}
+.event-card-meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#555}
+.deck-link-row{margin-top:10px;padding:8px 10px;background:#0e0e0e;border:1px solid #2a2a2a;border-radius:4px;display:flex;align-items:center;gap:8px;font-size:11px}
+.deck-link-row a{color:#9B59B6;text-decoration:none;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.deck-link-row a:hover{text-decoration:underline}
+.notes-indicator{font-size:10px;color:#C9A84C;margin-top:6px}
+.event-card-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid #1a1a1a}
+
+#view-form{display:none}
+#view-form.active{display:block}
+.form-header{background:#000;border-bottom:3px solid #C9A84C;padding:16px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.form-back{background:none;border:none;color:#C9A84C;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:6px;padding:0;white-space:nowrap}
+.form-back:hover{opacity:.8}
+.form-header-info{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
+.form-header-info .eyebrow{font-size:10px;letter-spacing:2px;color:#C9A84C;text-transform:uppercase}
+.form-header-info h2{font-size:18px;font-weight:900;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.progress-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.progress-dot{width:10px;height:10px;border-radius:50%;background:#222;border:2px solid #333;transition:all .3s}
+.progress-dot.filled{background:#C9A84C;border-color:#C9A84C}
+.progress-dot.complete{background:#27ae60;border-color:#27ae60}
+.progress-dot.delivered{background:#9B59B6;border-color:#9B59B6}
+.form-body{padding:28px;max-width:880px;margin:0 auto}
+.autosave-badge{background:#1C1507;border:1px solid #C9A84C;border-radius:4px;padding:7px 14px;font-size:11px;color:#C9A84C;margin-bottom:14px;display:none;align-items:center;gap:6px}
+.autosave-badge.show{display:flex}
+
+.deck-link-section{background:#180b28;border:1px solid #9B59B6;border-radius:6px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.deck-link-section .dlbl{font-size:11px;font-weight:700;letter-spacing:1px;color:#9B59B6;text-transform:uppercase;flex-shrink:0}
+.deck-link-section input{flex:1;min-width:200px;background:#0e0e0e;border:1px solid #2a2a2a;color:#e0e0e0;padding:8px 12px;border-radius:4px;font-size:13px;outline:none}
+.deck-link-section input:focus{border-color:#9B59B6}
+.deck-link-section a{color:#9B59B6;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap}
+.deck-link-section a:hover{text-decoration:underline}
+
+.form-section{background:#161616;border:1px solid #2a2a2a;border-radius:6px;margin-bottom:14px;overflow:hidden}
+.sec1{border-left:3px solid #C9A84C} .sec1 .snum{background:#C9A84C}
+.sec2{border-left:3px solid #4A9FD4} .sec2 .snum{background:#4A9FD4}
+.sec3{border-left:3px solid #9B59B6} .sec3 .snum{background:#9B59B6}
+.sec4{border-left:3px solid #1abc9c} .sec4 .snum{background:#1abc9c}
+.sec5{border-left:3px solid #e67e22} .sec5 .snum{background:#e67e22}
+.sec6{border-left:3px solid #e74c3c} .sec6 .snum{background:#e74c3c}
+.sec7{border-left:3px solid #e91e63} .sec7 .snum{background:#e91e63}
+.sec8{border-left:3px solid #27ae60} .sec8 .snum{background:#27ae60}
+.sec9{border-left:3px solid #00bcd4} .sec9 .snum{background:#00bcd4}
+.sec10{border-left:3px solid #C9A84C} .sec10 .snum{background:#C9A84C}
+.sec11{border-left:3px solid #888} .sec11 .snum{background:#888}
+.sec-notes{border-left:3px solid #f39c12} .sec-notes .snum{background:#f39c12}
+.section-header{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;user-select:none}
+.section-header:hover{background:#1a1a1a}
+.snum{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#000;flex-shrink:0}
+.stitle-wrap{flex:1}
+.stitle{font-size:14px;font-weight:800;color:#fff}
+.ssub{font-size:11px;color:#555;margin-top:1px}
+.scheck{font-size:13px;color:#27ae60;opacity:0;transition:opacity .2s;flex-shrink:0}
+.scheck.on{opacity:1}
+.chevron{color:#444;font-size:11px;transition:transform .25s;flex-shrink:0}
+.section-header.open .chevron{transform:rotate(180deg)}
+.section-body{display:none;padding:0 20px 20px}
+.section-body.open{display:block}
+
+.fg{margin-top:14px}
+.flabel{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#888;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.req{color:#e74c3c;font-size:10px}
+.def-tag{background:#1C1507;color:#C9A84C;border:1px solid #C9A84C;border-radius:2px;font-size:9px;padding:1px 5px;letter-spacing:.5px;display:none}
+.fi,.fta,.fsel{width:100%;background:#111;border:1px solid #2a2a2a;color:#e0e0e0;padding:10px 12px;border-radius:4px;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s;resize:vertical}
+.fi:focus,.fta:focus,.fsel:focus{border-color:#C9A84C}
+.fi.err,.fta.err{border-color:#e74c3c}
+.fta{min-height:80px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.frow-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px}
+
+.pill-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.pill{padding:6px 13px;border-radius:20px;border:1px solid #333;background:#111;color:#777;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;user-select:none}
+.pill:hover{border-color:#555;color:#ccc}
+.pill.on{background:#1C1507;border-color:#C9A84C;color:#C9A84C}
+.pill.on.blue{background:#071525;border-color:#4A9FD4;color:#4A9FD4}
+.pill.on.purple{background:#180b28;border-color:#9B59B6;color:#9B59B6}
+.pill.on.orange{background:#1a1007;border-color:#e67e22;color:#e67e22}
+.pill.on.green{background:#071507;border-color:#27ae60;color:#27ae60}
+
+.sport-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sport-tab{padding:6px 14px;border-radius:4px;border:1px solid #333;background:#111;color:#777;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.sport-tab.on{background:#1a0707;border-color:#e74c3c;color:#e74c3c}
+.sport-prompts{background:#0e0e0e;border:1px solid #222;border-radius:4px;padding:11px 14px;margin-bottom:10px;font-size:12px;color:#555;line-height:1.8;display:none}
+.sport-prompts.on{display:block}
+
+.toggle-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.tgl{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0}
+.tgl input{opacity:0;width:0;height:0;position:absolute}
+.tgl-track{position:absolute;inset:0;background:#222;border:1px solid #333;border-radius:11px;transition:all .2s}
+.tgl input:checked+.tgl-track{background:#1C1507;border-color:#C9A84C}
+.tgl-thumb{position:absolute;left:3px;top:3px;width:14px;height:14px;background:#555;border-radius:50%;transition:all .2s;pointer-events:none}
+.tgl input:checked~.tgl-thumb{background:#C9A84C;left:21px}
+.tgl-lbl{font-size:13px;color:#888}
+
+.wow-field{background:#1a1007;border:1px solid #e67e22;border-radius:4px;padding:14px}
+.wow-field .flabel{color:#e67e22}
+.wow-field .fi{background:#0e0e0e;border-color:#3a2510}
+
+.notes-thread{background:#1a1305;border:1px solid #f39c12;border-radius:4px;padding:14px;margin-top:14px}
+.notes-thread .flabel{color:#f39c12}
+.notes-list{max-height:300px;overflow-y:auto;margin-top:10px}
+.note-item{background:#0e0e0e;border-left:2px solid #f39c12;padding:8px 12px;margin-bottom:6px;border-radius:0 4px 4px 0}
+.note-meta{font-size:10px;color:#666;margin-bottom:3px}
+.note-text{font-size:12px;color:#ccc;line-height:1.5;white-space:pre-wrap}
+.note-add-row{display:flex;gap:6px;margin-top:10px}
+.note-add-row textarea{flex:1;background:#0e0e0e;border:1px solid #3a2510;color:#e0e0e0;padding:8px 10px;border-radius:4px;font-size:12px;resize:vertical;min-height:50px;font-family:inherit;outline:none}
+.note-add-row textarea:focus{border-color:#f39c12}
+
+#def-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:flex-start;justify-content:flex-end}
+#def-overlay.open{display:flex}
+.def-panel{background:#161616;border-left:3px solid #C9A84C;width:100%;max-width:520px;height:100vh;overflow-y:auto;padding:28px}
+.def-panel-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
+.def-panel-title{font-size:16px;font-weight:900;color:#fff}
+.def-panel-sub{font-size:11px;color:#555;margin-top:3px;line-height:1.5}
+.xbtn{background:none;border:none;color:#555;cursor:pointer;font-size:20px;line-height:1;padding:0}.xbtn:hover{color:#e0e0e0}
+.def-section{margin-bottom:22px}
+.def-section-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2a2a2a}
+
+#add-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center}
+#add-overlay.open{display:flex}
+.add-box{background:#161616;border-top:3px solid #C9A84C;border-radius:8px;padding:32px;width:100%;max-width:440px;margin:0 16px}
+.add-box h3{font-size:16px;font-weight:900;color:#fff;margin-bottom:6px}
+.add-box p{font-size:12px;color:#555;margin-bottom:20px}
+
+#del-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:none;align-items:center;justify-content:center}
+#del-overlay.open{display:flex}
+.del-box{background:#161616;border-top:3px solid #e74c3c;border-radius:8px;padding:32px;width:100%;max-width:380px;margin:0 16px;text-align:center}
+.del-box h3{font-size:15px;font-weight:900;color:#fff;margin-bottom:8px}
+.del-box p{font-size:12px;color:#888;margin-bottom:24px;line-height:1.6}
+.del-actions{display:flex;gap:8px;justify-content:center}
+
+.submit-area{background:#161616;border:1px solid #2a2a2a;border-top:3px solid #C9A84C;border-radius:6px;padding:24px;margin-top:8px;text-align:center}
+.submit-area h3{font-size:14px;font-weight:800;color:#fff;margin-bottom:6px}
+.submit-area p{font-size:12px;color:#555;margin-bottom:18px}
+.submit-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:11px 18px;border-radius:4px;font-size:12px;font-weight:700;z-index:9000;animation:fadeIn .3s ease}
+.toast-gold{background:#1C1507;border:1px solid #C9A84C;color:#C9A84C}
+.toast-green{background:#071507;border:1px solid #27ae60;color:#27ae60}
+.toast-purple{background:#180b28;border:1px solid #9B59B6;color:#9B59B6}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:640px){
+  .site-header{padding:14px 16px}
+  .stats-bar{flex-wrap:wrap}
+  .stat-item{flex:1 1 50%;border-right:none;border-bottom:1px solid #2a2a2a}
+  .dashboard-main{padding:16px}
+  .events-grid{grid-template-columns:1fr}
+  .form-header{padding:12px 16px}
+  .form-body{padding:16px}
+  .frow,.frow-3{grid-template-columns:1fr}
+  .progress-dots{display:none}
+  .def-panel{max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<div id="lock-screen">
+  <div class="lock-box">
+    <img src="https://ism-usa.com/wp-content/uploads/2026/03/ism2026logo-wht.png" alt="ISM" style="height:48px;margin-bottom:18px;opacity:.95">
+    <div class="lock-title">VIP Deck Questionnaire</div>
+    <div class="lock-sub">Enter your access code to continue</div>
+    <input class="lock-input" id="lock-input" type="password" placeholder="••••••••" autocomplete="off">
+    <button class="lock-btn" onclick="tryUnlock()">Unlock →</button>
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
+
+<div id="view-dashboard">
+  <header class="site-header">
+    <div class="header-left">
+      <img src="https://ism-usa.com/wp-content/uploads/2026/03/ism2026logo-wht.png" alt="ISM" style="height:36px">
+      <div>
+        <div class="eyebrow">International Sports Management</div>
+        <h1>VIP Deck Questionnaire</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="openDef()">⚙ ISM Defaults</button>
+      <button class="btn btn-outline" onclick="openAdd()">+ Add Event</button>
+    </div>
+  </header>
+  <div class="stats-bar">
+    <div class="stat-item stat-total"><div class="stat-num" id="sn-total">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-item stat-ns"><div class="stat-num" id="sn-ns">0</div><div class="stat-label">Not Started</div></div>
+    <div class="stat-item stat-ip"><div class="stat-num" id="sn-ip">0</div><div class="stat-label">In Progress</div></div>
+    <div class="stat-item stat-sub"><div class="stat-num" id="sn-sub">0</div><div class="stat-label">Submitted</div></div>
+    <div class="stat-item stat-dl"><div class="stat-num" id="sn-dl">0</div><div class="stat-label">Delivered</div></div>
+  </div>
+  <div class="dashboard-main">
+    <div class="events-grid" id="events-grid"></div>
+  </div>
+</div>
+
+<div id="view-form">
+  <div class="form-header">
+    <button class="form-back" onclick="backToDash()">&#8592; Dashboard</button>
+    <div class="form-header-info">
+      <img src="https://ism-usa.com/wp-content/uploads/2026/03/ism2026logo-wht.png" alt="ISM" style="height:24px;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div class="eyebrow">VIP Deck Brief</div>
+        <h2 id="fh-name">—</h2>
+      </div>
+    </div>
+    <div class="progress-dots" id="progress-dots"></div>
+    <button class="btn btn-ghost btn-sm" onclick="openDef()">⚙ Defaults</button>
+  </div>
+  <div class="form-body">
+    <div class="autosave-badge" id="autosave-badge">✓ Auto-saved</div>
+
+    <div class="deck-link-section">
+      <span class="dlbl">📎 Finished Deck Link</span>
+      <input type="url" id="f-decklink" placeholder="Paste Google Slides / OneDrive / Dropbox link once deck is built">
+      <a id="open-deck-link" href="#" target="_blank" style="display:none">Open ↗</a>
+    </div>
+
+    <div class="form-section sec1">
+      <div class="section-header open" onclick="toggleSec(this)">
+        <div class="snum">1</div>
+        <div class="stitle-wrap"><div class="stitle">Event Overview</div><div class="ssub">Basic event details + relationship context</div></div>
+        <span class="scheck" id="ck1">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body open">
+        <div class="fg"><div class="flabel">Event Name <span class="req">*</span></div><input class="fi" id="f-evname" placeholder="e.g. Daytona 500 VIP Experience 2026"></div>
+        <div class="frow">
+          <div class="fg"><div class="flabel">Location / Venue</div><input class="fi" id="f-loc" placeholder="City, Venue"></div>
+          <div class="fg"><div class="flabel">Date or Season</div><input class="fi" id="f-date" placeholder="e.g. Feb 15, 2026"></div>
+        </div>
+        <div class="frow-3">
+          <div class="fg"><div class="flabel">Sport / Category</div><input class="fi" id="f-sport" placeholder="e.g. NASCAR, Golf"></div>
+          <div class="fg"><div class="flabel">One-time or Program</div><input class="fi" id="f-prog" placeholder="e.g. Annual"></div>
+          <div class="fg"><div class="flabel">Budget Tier</div>
+            <select class="fsel" id="f-budget">
+              <option value="">— Select —</option>
+              <option>Ultra-Premium</option>
+              <option>Premium</option>
+              <option>Standard</option>
+              <option>Custom / TBD</option>
+            </select>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fg"><div class="flabel">Past ISM Relationship</div>
+            <select class="fsel" id="f-relationship">
+              <option value="">— Select —</option>
+              <option>First-time prospect</option>
+              <option>Returning client</option>
+              <option>Existing active account</option>
+              <option>Re-engagement</option>
+            </select>
+          </div>
+          <div class="fg"><div class="flabel">Decision Date (when must they say yes?)</div><input class="fi" id="f-decdate" placeholder="e.g. by April 30, 2026"></div>
+        </div>
+        <div class="fg"><div class="flabel">What makes this event special or premium?</div><textarea class="fta" id="f-special" placeholder="What differentiates this experience..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-section sec2">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">2</div>
+        <div class="stitle-wrap"><div class="stitle">Target Audience</div><div class="ssub">Who decides + who attends</div></div>
+        <span class="scheck" id="ck2">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="frow">
+          <div class="fg"><div class="flabel">Decision Maker (who approves the deal)</div><input class="fi" id="f-decmaker" placeholder="e.g. CMO, Head of Marketing"></div>
+          <div class="fg"><div class="flabel">Who will actually attend?</div><input class="fi" id="f-attend" placeholder="e.g. C-suite executives + spouses"></div>
+        </div>
+        <div class="frow-3">
+          <div class="fg"><div class="flabel">Approximate Guest Count</div><input class="fi" id="f-count" placeholder="e.g. 8–12"></div>
+          <div class="fg"><div class="flabel">Experience Level</div><input class="fi" id="f-explvl" placeholder="e.g. First-time VIPs"></div>
+          <div class="fg"><div class="flabel">Who is this deck created for?</div><input class="fi" id="f-for" placeholder="e.g. Sponsorship prospect"></div>
+        </div>
+        <div class="fg"><div class="flabel">Preferences or sensitivities we should know?</div><textarea class="fta" id="f-sensit" placeholder="Dietary, accessibility, cultural considerations..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-section sec3">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">3</div>
+        <div class="stitle-wrap"><div class="stitle">Business Goals</div><div class="ssub">Objectives, outcomes, and competition</div></div>
+        <span class="scheck" id="ck3">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg">
+          <div class="flabel">Main business objectives <span class="def-tag" id="dt-goals">DEFAULT</span></div>
+          <div class="pill-grid" id="pg-goals">
+            <span class="pill" data-v="protect" onclick="tp(this,'goals','purple')">Protect Growing Business</span>
+            <span class="pill" data-v="dealclose" onclick="tp(this,'goals','purple')">Accelerate Deal Close</span>
+            <span class="pill" data-v="retention" onclick="tp(this,'goals','purple')">Client Retention</span>
+            <span class="pill" data-v="newbiz" onclick="tp(this,'goals','purple')">New Business Development</span>
+            <span class="pill" data-v="sponsoract" onclick="tp(this,'goals','purple')">Sponsor Activation</span>
+            <span class="pill" data-v="brandaware" onclick="tp(this,'goals','purple')">Brand Awareness</span>
+            <span class="pill" data-v="hospitality" onclick="tp(this,'goals','purple')">Customer Hospitality</span>
+            <span class="pill" data-v="vendorrel" onclick="tp(this,'goals','purple')">Vendor / Partner Relationship</span>
+            <span class="pill" data-v="execnet" onclick="tp(this,'goals','purple')">Executive Networking</span>
+            <span class="pill" data-v="teamreward" onclick="tp(this,'goals','purple')">Employee / Team Reward</span>
+            <span class="pill" data-v="prodlaunch" onclick="tp(this,'goals','purple')">Product Launch / Brand Moment</span>
+            <span class="pill" data-v="other" onclick="tp(this,'goals','purple')">Other</span>
+          </div>
+        </div>
+        <div class="fg"><div class="flabel">Primary business goal of this event</div><textarea class="fta" id="f-primgoal" placeholder="The main outcome you're driving..."></textarea></div>
+        <div class="fg"><div class="flabel">Competitor Context — who else are they considering?</div><textarea class="fta" id="f-competitors" placeholder="Other agencies, internal teams, or alternatives we're up against..."></textarea></div>
+        <div class="fg"><div class="flabel">What should the audience believe after seeing the deck?</div><textarea class="fta" id="f-belief" placeholder="Key belief or perception shift..."></textarea></div>
+        <div class="fg"><div class="flabel">What action should they take?</div><input class="fi" id="f-cta" placeholder="e.g. Schedule a call, confirm attendance"></div>
+      </div>
+    </div>
+
+    <div class="form-section sec4">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">4</div>
+        <div class="stitle-wrap"><div class="stitle">Core Message</div><div class="ssub">The story this deck tells</div></div>
+        <span class="scheck" id="ck4">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg"><div class="flabel">What is the main story we want this deck to tell?</div><textarea class="fta" id="f-story" placeholder="The central narrative thread..."></textarea></div>
+        <div class="fg"><div class="flabel">Top 3–5 points we must communicate</div><textarea class="fta" id="f-points" placeholder="1.&#10;2.&#10;3.&#10;4.&#10;5." style="min-height:100px"></textarea></div>
+        <div class="fg"><div class="flabel">Phrases, themes, or positioning statements to include</div><textarea class="fta" id="f-phrases" placeholder="Specific language, taglines, themes..."></textarea></div>
+        <div class="fg"><div class="flabel">Words, names, brands, or claims to avoid</div><textarea class="fta" id="f-avoid" placeholder="Competitor brands, sensitive terms, legal restrictions..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-section sec5">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">5</div>
+        <div class="stitle-wrap"><div class="stitle">VIP Experience Offering</div><div class="ssub">Elements + the wow factor</div></div>
+        <span class="scheck" id="ck5">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg wow-field">
+          <div class="flabel">⭐ The Wow Factor — single most jaw-dropping moment</div>
+          <input class="fi" id="f-wow" placeholder="The one moment they'll talk about for years (be specific)">
+        </div>
+        <div class="fg">
+          <div class="flabel">Experience elements to include <span class="def-tag" id="dt-vip">DEFAULT</span></div>
+          <div class="pill-grid" id="pg-vip">
+            <span class="pill" data-v="premtickets" onclick="tp(this,'vip','orange')">Premium tickets</span>
+            <span class="pill" data-v="privdinner" onclick="tp(this,'vip','orange')">Private dinner</span>
+            <span class="pill" data-v="suite" onclick="tp(this,'vip','orange')">Suite access</span>
+            <span class="pill" data-v="welcomerecp" onclick="tp(this,'vip','orange')">Welcome reception</span>
+            <span class="pill" data-v="hosplounge" onclick="tp(this,'vip','orange')">Private hospitality lounge</span>
+            <span class="pill" data-v="postevent" onclick="tp(this,'vip','orange')">Post-event celebration</span>
+            <span class="pill" data-v="btsaccess" onclick="tp(this,'vip','orange')">Behind-the-scenes access</span>
+            <span class="pill" data-v="transport" onclick="tp(this,'vip','orange')">Executive transfer</span>
+            <span class="pill" data-v="meetgreet" onclick="tp(this,'vip','orange')">Athlete meet-and-greet</span>
+            <span class="pill" data-v="hotel" onclick="tp(this,'vip','orange')">Hotel coordination</span>
+            <span class="pill" data-v="photo" onclick="tp(this,'vip','orange')">Photo opportunities</span>
+            <span class="pill" data-v="aviation" onclick="tp(this,'vip','orange')">Private aviation</span>
+            <span class="pill" data-v="trophy" onclick="tp(this,'vip','orange')">Trophy moment</span>
+            <span class="pill" data-v="gifting" onclick="tp(this,'vip','orange')">Branded gifting</span>
+            <span class="pill" data-v="guidedtour" onclick="tp(this,'vip','orange')">Guided tour</span>
+            <span class="pill" data-v="merch" onclick="tp(this,'vip','orange')">Custom merchandise</span>
+            <span class="pill" data-v="practiceacc" onclick="tp(this,'vip','orange')">Practice / qualifying access</span>
+            <span class="pill" data-v="sponsact" onclick="tp(this,'vip','orange')">Sponsor activation</span>
+            <span class="pill" data-v="fieldacc" onclick="tp(this,'vip','orange')">Field / track / paddock access</span>
+            <span class="pill" data-v="media" onclick="tp(this,'vip','orange')">Media / content capture</span>
+            <span class="pill" data-v="pitacc" onclick="tp(this,'vip','orange')">Pit / garage / backstage access</span>
+            <span class="pill" data-v="other" onclick="tp(this,'vip','orange')">Other</span>
+          </div>
+        </div>
+        <div class="fg"><div class="flabel">Describe the full guest journey from arrival to departure</div><textarea class="fta" id="f-journey" placeholder="Walk through the experience chronologically..." style="min-height:100px"></textarea></div>
+        <div class="fg"><div class="flabel">Other "money-can't-buy" moments</div><textarea class="fta" id="f-moments" placeholder="Other access or moments no one else can offer..."></textarea></div>
+        <div class="fg"><div class="flabel">What parts of the experience are fully managed by ISM?</div><textarea class="fta" id="f-ismmgd" placeholder="Logistics, concierge, coordination handled end-to-end..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-section sec6">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">6</div>
+        <div class="stitle-wrap"><div class="stitle">Event-Specific Access</div><div class="ssub">Unique access by sport type</div></div>
+        <span class="scheck" id="ck6">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg">
+          <div class="flabel" style="margin-bottom:10px">Tap your event category to see reference access prompts</div>
+          <div class="sport-tabs">
+            <div class="sport-tab" onclick="setSport(this,'racing')">Racing / NASCAR</div>
+            <div class="sport-tab" onclick="setSport(this,'golf')">Golf</div>
+            <div class="sport-tab" onclick="setSport(this,'horse')">Horse Racing</div>
+            <div class="sport-tab" onclick="setSport(this,'football')">Football / Stadium</div>
+            <div class="sport-tab" onclick="setSport(this,'tennis')">Tennis / International</div>
+          </div>
+          <div class="sport-prompts" id="sp-racing">Garage access · Hauler tours · Pit box seating · Pit road access · Driver introductions · Trophy photos · Live telemetry · Crew chief access · Victory lane moments</div>
+          <div class="sport-prompts" id="sp-golf">Private hospitality tent · Clubhouse access · Tee/fairway viewing · Player meet-and-greet · Pro-am · Curated dinners · Course tours</div>
+          <div class="sport-prompts" id="sp-horse">Private box · Paddock access · Winner's circle photo · Jockey/trainer access · Premium dining · Private transportation</div>
+          <div class="sport-prompts" id="sp-football">Luxury suite · Field access · Pregame hospitality · Player/alumni meet-and-greet · Sideline photo moments · Postgame dinner</div>
+          <div class="sport-prompts" id="sp-tennis">Premium courtside · Hospitality lounge · Player access · Private reception · Travel coordination</div>
+        </div>
+        <div class="fg"><div class="flabel">Specific access confirmed for this event</div><textarea class="fta" id="f-access" placeholder="List the exact access and experiences included..." style="min-height:100px"></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-section sec7">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">7</div>
+        <div class="stitle-wrap"><div class="stitle">Visual Direction</div><div class="ssub">Look, feel, and brand style</div></div>
+        <span class="scheck" id="ck7">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg">
+          <div class="flabel">Visual style <span class="def-tag" id="dt-style">DEFAULT</span></div>
+          <div class="pill-grid" id="pg-style">
+            <span class="pill" data-v="ultralux" onclick="tp(this,'style')">Ultra-luxury</span>
+            <span class="pill" data-v="highenergy" onclick="tp(this,'style')">High-energy sports</span>
+            <span class="pill" data-v="cinematic" onclick="tp(this,'style')">Dark cinematic</span>
+            <span class="pill" data-v="corprem" onclick="tp(this,'style')">Corporate premium</span>
+            <span class="pill" data-v="minimal" onclick="tp(this,'style')">Minimal and clean</span>
+            <span class="pill" data-v="bold" onclick="tp(this,'style')">Bold and aggressive</span>
+            <span class="pill" data-v="family" onclick="tp(this,'style')">Family-friendly</span>
+            <span class="pill" data-v="immersive" onclick="tp(this,'style')">Immersive / experiential</span>
+            <span class="pill" data-v="other" onclick="tp(this,'style')">Other</span>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fg"><div class="flabel">Dominant Colors <span class="def-tag" id="dt-colors">DEFAULT</span></div><input class="fi" id="f-colors" placeholder="e.g. Navy, Gold, White"></div>
+          <div class="fg"><div class="flabel">Deck should feel like...</div><input class="fi" id="f-feel" placeholder="e.g. A luxury brand lookbook"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><div class="flabel">Reference files / links</div><input class="fi" id="f-refs" placeholder="Drive link, Dropbox, or file names"></div>
+          <div class="fg"><div class="flabel">Can we use generated imagery?</div>
+            <div class="toggle-row">
+              <label class="tgl"><input type="checkbox" id="f-genimg"><span class="tgl-track"></span><span class="tgl-thumb"></span></label>
+              <span class="tgl-lbl" id="gen-lbl">No</span>
+            </div>
+          </div>
+        </div>
+        <div class="fg"><div class="flabel">Logos, team names, or partners to avoid</div><input class="fi" id="f-logoavoid" placeholder="e.g. Competitor logos, unlicensed marks"></div>
+      </div>
+    </div>
+
+    <div class="form-section sec8">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">8</div>
+        <div class="stitle-wrap"><div class="stitle">Content & Proof Points</div><div class="ssub">ISM credentials and supporting evidence</div></div>
+        <span class="scheck" id="ck8">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg">
+          <div class="flabel">ISM company points to include <span class="def-tag" id="dt-ism">DEFAULT</span></div>
+          <div class="pill-grid" id="pg-ism">
+            <span class="pill" data-v="29yrs" onclick="tp(this,'ism','green')">29 years of experience</span>
+            <span class="pill" data-v="premhosp" onclick="tp(this,'ism','green')">Premium sports hospitality</span>
+            <span class="pill" data-v="execent" onclick="tp(this,'ism','green')">Executive entertainment</span>
+            <span class="pill" data-v="relaccess" onclick="tp(this,'ism','green')">Relationship-driven access</span>
+            <span class="pill" data-v="turnkey" onclick="tp(this,'ism','green')">Turnkey guest management</span>
+            <span class="pill" data-v="aviation" onclick="tp(this,'ism','green')">Private aviation partner</span>
+            <span class="pill" data-v="multicity" onclick="tp(this,'ism','green')">Multi-city event programs</span>
+            <span class="pill" data-v="customcorp" onclick="tp(this,'ism','green')">Custom corporate programs</span>
+            <span class="pill" data-v="other" onclick="tp(this,'ism','green')">Other</span>
+          </div>
+        </div>
+        <div class="fg"><div class="flabel">Client testimonials, quotes, or case studies available?</div><textarea class="fta" id="f-testimonials" placeholder="Paste quotes or describe what's available..."></textarea></div>
+        <div class="fg"><div class="flabel">Specific ROI or business outcome language to include</div><textarea class="fta" id="f-roi" placeholder="Stats, outcome language, measurement frameworks..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-section sec9">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">9</div>
+        <div class="stitle-wrap"><div class="stitle">Slide Structure</div><div class="ssub">Which slides and format</div></div>
+        <span class="scheck" id="ck9">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg">
+          <div class="flabel">Slides to include <span class="def-tag" id="dt-slides">DEFAULT</span></div>
+          <div class="pill-grid" id="pg-slides">
+            <span class="pill" data-v="cover" onclick="tp(this,'slides','blue')">Cover slide</span>
+            <span class="pill" data-v="whoism" onclick="tp(this,'slides','blue')">Who ISM is</span>
+            <span class="pill" data-v="whyevent" onclick="tp(this,'slides','blue')">Why this event matters</span>
+            <span class="pill" data-v="bizoutcomes" onclick="tp(this,'slides','blue')">Business outcomes / goals</span>
+            <span class="pill" data-v="eventoverview" onclick="tp(this,'slides','blue')">Event experience overview</span>
+            <span class="pill" data-v="guestjourney" onclick="tp(this,'slides','blue')">Guest journey</span>
+            <span class="pill" data-v="accessmoments" onclick="tp(this,'slides','blue')">Access moments</span>
+            <span class="pill" data-v="meettalent" onclick="tp(this,'slides','blue')">Meet-and-greet / talent access</span>
+            <span class="pill" data-v="brandact" onclick="tp(this,'slides','blue')">Brand activation</span>
+            <span class="pill" data-v="b2bopp" onclick="tp(this,'slides','blue')">B2B sales opportunity</span>
+            <span class="pill" data-v="roivalue" onclick="tp(this,'slides','blue')">ROI / relationship value</span>
+            <span class="pill" data-v="schedule" onclick="tp(this,'slides','blue')">Schedule / itinerary</span>
+            <span class="pill" data-v="nextsteps" onclick="tp(this,'slides','blue')">Next steps / contact</span>
+            <span class="pill" data-v="hosppack" onclick="tp(this,'slides','blue')">Hospitality package</span>
+            <span class="pill" data-v="other" onclick="tp(this,'slides','blue')">Other</span>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fg"><div class="flabel">Preferred Deck Length</div><input class="fi" id="f-decklist" placeholder="e.g. 12–15 slides"></div>
+          <div class="fg"><div class="flabel">Final Deliverable Format</div><input class="fi" id="f-format" placeholder="e.g. PowerPoint, Google Slides, PDF"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section sec10">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">10</div>
+        <div class="stitle-wrap"><div class="stitle">Logistics & Contact</div><div class="ssub">Point of contact and delivery details</div></div>
+        <span class="scheck" id="ck10">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="frow">
+          <div class="fg"><div class="flabel">Primary Contact Name <span class="req">*</span> <span class="def-tag" id="dt-cname">DEFAULT</span></div><input class="fi" id="f-cname" placeholder="Full name"></div>
+          <div class="fg"><div class="flabel">Company / Organization</div><input class="fi" id="f-company" placeholder="Company name"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><div class="flabel">Email <span class="def-tag" id="dt-cemail">DEFAULT</span></div><input class="fi" id="f-cemail" type="email" placeholder="email@company.com"></div>
+          <div class="fg"><div class="flabel">Phone <span class="def-tag" id="dt-cphone">DEFAULT</span></div><input class="fi" id="f-cphone" placeholder="+1 (___) ___-____"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><div class="flabel">Website</div><input class="fi" id="f-website" placeholder="https://..."></div>
+          <div class="fg"><div class="flabel">Deadline for the Deck <span class="req">*</span></div><input class="fi" id="f-deadline" placeholder="e.g. May 15, 2026"></div>
+        </div>
+        <div class="fg"><div class="flabel">Who should be listed on the final contact slide?</div><input class="fi" id="f-finalcontact" placeholder="Name, title, and contact info for the deck's last slide"></div>
+      </div>
+    </div>
+
+    <div class="form-section sec11">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">11</div>
+        <div class="stitle-wrap"><div class="stitle">Final Notes</div><div class="ssub">Anything else before we build</div></div>
+        <span class="scheck" id="ck11">✓</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="fg"><div class="flabel">Anything else we should know before building the deck?</div><textarea class="fta" id="f-extra" placeholder="Context, constraints, or special instructions..." style="min-height:100px"></textarea></div>
+        <div class="fg"><div class="flabel">What would make this deck feel successful to you?</div><textarea class="fta" id="f-success" placeholder="Your definition of a home run on this brief..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-section sec-notes">
+      <div class="section-header" onclick="toggleSec(this)">
+        <div class="snum">📝</div>
+        <div class="stitle-wrap"><div class="stitle">Internal Team Notes</div><div class="ssub">Running thread — not part of the brief</div></div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="notes-thread" style="margin-top:0">
+          <div class="flabel">Team notes (visible to your team only)</div>
+          <div class="notes-list" id="notes-list"></div>
+          <div class="note-add-row">
+            <textarea id="new-note" placeholder="Add a note... (e.g. 'Ruth is handling follow-up', 'client wants this by Thursday')"></textarea>
+          </div>
+          <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addNote()">+ Add Note</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <h3>Ready to submit this brief?</h3>
+      <p>Sends the brief to ISM for the deck build. Required fields must be filled first.</p>
+      <div class="submit-actions">
+        <button class="btn btn-ghost" onclick="markDelivered()">✓ Mark Deck Delivered</button>
+        <button class="btn btn-gold" onclick="submitBrief()">✉ Submit Brief</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="def-overlay" onclick="defOvClick(event)">
+  <div class="def-panel">
+    <div class="def-panel-hdr">
+      <div><div class="def-panel-title">ISM Defaults</div><div class="def-panel-sub">Pre-fills every NEW event brief.<br>Existing briefs are not affected by changes here.</div></div>
+      <button class="xbtn" onclick="closeDef()">✕</button>
+    </div>
+    <div class="def-section">
+      <div class="def-section-lbl">Contact Info</div>
+      <div class="fg"><div class="flabel">Primary Contact Name</div><input class="fi" id="d-cname" placeholder="ISM contact name"></div>
+      <div class="frow">
+        <div class="fg"><div class="flabel">Email</div><input class="fi" id="d-cemail" placeholder="contact@ism.com"></div>
+        <div class="fg"><div class="flabel">Phone</div><input class="fi" id="d-cphone" placeholder="+1 (___) ___-____"></div>
+      </div>
+    </div>
+    <div class="def-section">
+      <div class="def-section-lbl">Default Business Goals</div>
+      <div class="pill-grid" id="dpg-goals">
+        <span class="pill" data-v="protect" onclick="tdp(this)">Protect Growing Business</span>
+        <span class="pill" data-v="dealclose" onclick="tdp(this)">Accelerate Deal Close</span>
+        <span class="pill" data-v="retention" onclick="tdp(this)">Client Retention</span>
+        <span class="pill" data-v="newbiz" onclick="tdp(this)">New Business Development</span>
+        <span class="pill" data-v="hospitality" onclick="tdp(this)">Customer Hospitality</span>
+        <span class="pill" data-v="execnet" onclick="tdp(this)">Executive Networking</span>
+        <span class="pill" data-v="vendorrel" onclick="tdp(this)">Vendor / Partner Relationship</span>
+        <span class="pill" data-v="brandaware" onclick="tdp(this)">Brand Awareness</span>
+      </div>
+    </div>
+    <div class="def-section">
+      <div class="def-section-lbl">Default Visual (leave blank — set per event)</div>
+      <div class="fg"><div class="flabel">Default Dominant Colors</div><input class="fi" id="d-colors" placeholder="e.g. Navy, Gold"></div>
+    </div>
+    <div class="def-section">
+      <div class="def-section-lbl">Default ISM Company Points (always lead with these)</div>
+      <div class="pill-grid" id="dpg-ism">
+        <span class="pill" data-v="29yrs" onclick="tdp(this)">29 years of experience</span>
+        <span class="pill" data-v="premhosp" onclick="tdp(this)">Premium sports hospitality</span>
+        <span class="pill" data-v="execent" onclick="tdp(this)">Executive entertainment</span>
+        <span class="pill" data-v="relaccess" onclick="tdp(this)">Relationship-driven access</span>
+        <span class="pill" data-v="turnkey" onclick="tdp(this)">Turnkey guest management</span>
+        <span class="pill" data-v="aviation" onclick="tdp(this)">Private aviation partner</span>
+        <span class="pill" data-v="multicity" onclick="tdp(this)">Multi-city event programs</span>
+        <span class="pill" data-v="customcorp" onclick="tdp(this)">Custom corporate programs</span>
+      </div>
+    </div>
+    <div class="def-section">
+      <div class="def-section-lbl">Default Slide Structure (winning flow)</div>
+      <div class="pill-grid" id="dpg-slides">
+        <span class="pill" data-v="cover" onclick="tdp(this)">Cover slide</span>
+        <span class="pill" data-v="whoism" onclick="tdp(this)">Who ISM is</span>
+        <span class="pill" data-v="whyevent" onclick="tdp(this)">Why this event matters</span>
+        <span class="pill" data-v="guestjourney" onclick="tdp(this)">Guest journey</span>
+        <span class="pill" data-v="accessmoments" onclick="tdp(this)">Access moments</span>
+        <span class="pill" data-v="bizoutcomes" onclick="tdp(this)">Business outcomes</span>
+        <span class="pill" data-v="roivalue" onclick="tdp(this)">ROI / relationship value</span>
+        <span class="pill" data-v="nextsteps" onclick="tdp(this)">Next steps / contact</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-gold" style="flex:1" onclick="saveDef()">Save Defaults</button>
+      <button class="btn btn-ghost" onclick="closeDef()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="add-overlay" onclick="if(event.target.id==='add-overlay')closeAdd()">
+  <div class="add-box">
+    <h3>Add New Event</h3>
+    <p>Enter the event name to create a new deck brief.</p>
+    <div class="fg"><div class="flabel">Event Name</div><input class="fi" id="new-ev-name" placeholder="e.g. Daytona 500 VIP Experience 2026" onkeydown="if(event.key==='Enter')confirmAdd()"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-gold" style="flex:1" onclick="confirmAdd()">Create Event →</button>
+      <button class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="del-overlay">
+  <div class="del-box">
+    <h3>Delete Event?</h3>
+    <p id="del-msg">This will permanently remove the event and all answers.</p>
+    <div class="del-actions">
+      <button class="btn btn-danger" onclick="confirmDel()">Delete</button>
+      <button class="btn btn-ghost" onclick="closeDel()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PW='9581c48c70f3fa588ef477e5e757401e3115a108a13a3d264e80bf7c25c533a8';
+const EK='ism_events',DK='ism_defaults';
+const DEFAULT_DEFAULTS={
+  goals:['dealclose','retention','hospitality','execnet'],
+  ism:['29yrs','premhosp','execent','relaccess','turnkey','aviation','multicity','customcorp'],
+  slides:['cover','whoism','whyevent','guestjourney','accessmoments','bizoutcomes','roivalue','nextsteps']
+};
+let EVS={},CUR=null,DEL_ID=null,AST=null;
+
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function tryUnlock(){
+  const v=document.getElementById('lock-input').value;
+  if(await sha256(v)===PW){
+    sessionStorage.setItem('ism_auth','1');
+    document.getElementById('lock-screen').classList.add('hidden');
+    init();
+  }else{
+    const i=document.getElementById('lock-input');
+    i.classList.add('error');
+    document.getElementById('lock-error').textContent='Incorrect access code';
+    setTimeout(()=>{i.classList.remove('error');i.value='';document.getElementById('lock-error').textContent=''},600);
+  }
+}
+document.getElementById('lock-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
+if(sessionStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden')}
+
+function init(){
+  try{EVS=JSON.parse(localStorage.getItem(EK)||'{}')}catch{EVS={}}
+  // seed defaults if first run
+  if(!localStorage.getItem(DK)){
+    localStorage.setItem(DK,JSON.stringify(DEFAULT_DEFAULTS));
+  }
+  renderDash();
+  loadDefPanel();
+}
+window.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('ism_auth')==='1')init()});
+
+function renderDash(){
+  const ids=Object.keys(EVS);
+  const ns=ids.filter(i=>EVS[i].status==='ns').length;
+  const ip=ids.filter(i=>EVS[i].status==='ip').length;
+  const sub=ids.filter(i=>EVS[i].status==='sub').length;
+  const dl=ids.filter(i=>EVS[i].status==='dl').length;
+  document.getElementById('sn-total').textContent=ids.length;
+  document.getElementById('sn-ns').textContent=ns;
+  document.getElementById('sn-ip').textContent=ip;
+  document.getElementById('sn-sub').textContent=sub;
+  document.getElementById('sn-dl').textContent=dl;
+  const g=document.getElementById('events-grid');
+  if(!ids.length){g.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><p>No events yet. Click <strong>+ Add Event</strong> to get started.</p></div>';return}
+  // sort: in-progress first, then submitted, then delivered, then not started
+  const order={ip:0,sub:1,dl:2,ns:3};
+  ids.sort((a,b)=>(order[EVS[a].status]||9)-(order[EVS[b].status]||9));
+  g.innerHTML=ids.map(id=>{
+    const ev=EVS[id],{pct,filled}=calcPct(ev.data||{});
+    const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dl:'Deck Delivered'}[ev.status]||'Not Started';
+    const scls={ns:'s-ns',ip:'s-ip',sub:'s-sub',dl:'s-dl'}[ev.status]||'s-ns';
+    const barCls=ev.status==='dl'?'delivered':(ev.status==='sub'?'done':'');
+    const noteCount=(ev.notes||[]).length;
+    const lastEdit=ev.lastEdit?`Edited ${timeAgo(ev.lastEdit)}`:`Created ${ev.created}`;
+    const deckLink=ev.data?.decklink?`<div class="deck-link-row">📎 <a href="${esc(ev.data.decklink)}" target="_blank">${esc(shortUrl(ev.data.decklink))}</a></div>`:'';
+    const noteIndicator=noteCount?`<div class="notes-indicator">📝 ${noteCount} team note${noteCount>1?'s':''}</div>`:'';
+    return`<div class="event-card">
+      <div class="event-card-top">
+        <div><div class="event-card-name">${esc(ev.name)}</div><div class="event-card-date">${lastEdit}</div></div>
+        <span class="status-badge ${scls}">${slbl}</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill ${barCls}" style="width:${pct}%"></div></div>
+      <div class="event-card-meta"><span>${filled}/11 sections</span><span>${pct}%</span></div>
+      ${deckLink}
+      ${noteIndicator}
+      <div class="event-card-actions">
+        <button class="btn btn-outline btn-sm" style="flex:1" onclick="openEv('${id}')">Open Brief →</button>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();promptDel('${id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calcPct(d){
+  const c=[
+    !!(d.evname||'').trim(),
+    !!(d.decmaker||d.attend||d['for']||'').trim(),
+    !!((d['goals']||[]).length||(d.primgoal||'').trim()),
+    !!(d.story||d.points||'').trim(),
+    !!((d['vip']||[]).length||(d.journey||d.wow||'').trim()),
+    !!(d.access||'').trim(),
+    !!((d['style']||[]).length||(d.colors||'').trim()),
+    !!((d['ism']||[]).length||(d.testimonials||'').trim()),
+    !!((d['slides']||[]).length||(d.decklist||'').trim()),
+    !!(d.cname||'').trim(),
+    !!(d.extra||d.success||'').trim()
+  ];
+  const f=c.filter(Boolean).length;
+  return{pct:Math.round(f/11*100),filled:f};
+}
+
+function timeAgo(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60)return 'just now';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+function shortUrl(u){try{const p=new URL(u);return p.hostname+p.pathname.slice(0,20)+(p.pathname.length>20?'…':'')}catch{return u.slice(0,30)+'…'}}
+
+function openAdd(){document.getElementById('add-overlay').classList.add('open');setTimeout(()=>document.getElementById('new-ev-name').focus(),80)}
+function closeAdd(){document.getElementById('add-overlay').classList.remove('open');document.getElementById('new-ev-name').value=''}
+function confirmAdd(){
+  const name=document.getElementById('new-ev-name').value.trim();
+  if(!name)return;
+  const id='ev'+Date.now();
+  const def=getDefData();
+  const data={};
+  if(def.cname)data.cname=def.cname;
+  if(def.cemail)data.cemail=def.cemail;
+  if(def.cphone)data.cphone=def.cphone;
+  if(def.colors)data.colors=def.colors;
+  if(def.goals&&def.goals.length)data.goals=def.goals;
+  if(def.ism&&def.ism.length)data.ism=def.ism;
+  if(def.slides&&def.slides.length)data.slides=def.slides;
+  EVS[id]={name,status:'ns',created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),lastEdit:Date.now(),data,notes:[]};
+  save();closeAdd();openEv(id);
+}
+function promptDel(id){DEL_ID=id;document.getElementById('del-msg').textContent=`"${esc(EVS[id].name)}" and all answers will be permanently deleted.`;document.getElementById('del-overlay').classList.add('open')}
+function closeDel(){document.getElementById('del-overlay').classList.remove('open');DEL_ID=null}
+function confirmDel(){if(!DEL_ID)return;delete EVS[DEL_ID];save();closeDel();if(CUR===DEL_ID)backToDash();else renderDash()}
+
+function openEv(id){
+  CUR=id;
+  const ev=EVS[id];
+  document.getElementById('fh-name').textContent=ev.name;
+  document.getElementById('view-dashboard').classList.add('hidden');
+  document.getElementById('view-form').classList.add('active');
+  loadForm(ev.data||{});
+  renderNotes();
+  buildDots();refreshDots();refreshChecks();
+  attachSave();
+  window.scrollTo(0,0);
+}
+function backToDash(){
+  saveNow();
+  CUR=null;
+  document.getElementById('view-dashboard').classList.remove('hidden');
+  document.getElementById('view-form').classList.remove('active');
+  renderDash();
+}
+
+const TF=['evname','loc','date','sport','prog','budget','relationship','decdate','special','decmaker','attend','count','explvl','for','sensit','primgoal','competitors','belief','cta','story','points','phrases','avoid','wow','journey','moments','ismmgd','access','colors','feel','refs','logoavoid','testimonials','roi','decklist','format','cname','company','cemail','cphone','website','deadline','finalcontact','extra','success','decklink'];
+const PGS=['goals','vip','style','ism','slides'];
+
+function loadForm(d){
+  TF.forEach(k=>{const el=document.getElementById('f-'+k);if(el)el.value=d[k]||''});
+  const gi=document.getElementById('f-genimg');if(gi){gi.checked=!!d.genimg;updateGenLbl()}
+  PGS.forEach(g=>{
+    const vals=d[g]||[];
+    document.querySelectorAll(`#pg-${g} .pill`).forEach(p=>{
+      const on=vals.includes(p.dataset.v);
+      p.classList.toggle('on',on);
+      if(on){const c={goals:'purple',vip:'orange',style:'',ism:'green',slides:'blue'}[g];if(c)p.classList.add(c)}
+      else p.classList.remove('purple','orange','green','blue');
+    });
+  });
+  showDefTags(d);
+  updateDeckLinkBtn();
+  if(d.sporttab){document.querySelectorAll('.sport-tab').forEach(t=>{if(t.dataset.sport===d.sporttab){t.classList.add('on');document.getElementById('sp-'+d.sporttab)?.classList.add('on')}})}
+}
+function showDefTags(d){
+  const def=getDefData();
+  const st=(tagId,defKey)=>{const t=document.getElementById(tagId);if(!t)return;const has=def[defKey]&&(Array.isArray(def[defKey])?def[defKey].length:def[defKey]);t.style.display=has?'inline':'none'};
+  st('dt-goals','goals');st('dt-vip','vip');st('dt-style','style');st('dt-ism','ism');st('dt-slides','slides');
+  st('dt-colors','colors');st('dt-cname','cname');st('dt-cemail','cemail');st('dt-cphone','cphone');
+}
+function collectForm(){
+  const d={};
+  TF.forEach(k=>{const el=document.getElementById('f-'+k);if(el)d[k]=el.value});
+  d.genimg=document.getElementById('f-genimg')?.checked||false;
+  PGS.forEach(g=>{d[g]=Array.from(document.querySelectorAll(`#pg-${g} .pill.on`)).map(p=>p.dataset.v)});
+  const at=document.querySelector('.sport-tab.on');if(at)d.sporttab=at.dataset.sport;
+  return d;
+}
+
+function attachSave(){
+  TF.forEach(k=>{const el=document.getElementById('f-'+k);if(el){el.removeEventListener('input',onChange);el.addEventListener('input',onChange)}});
+  document.getElementById('f-genimg')?.addEventListener('change',onChange);
+}
+function onChange(){clearTimeout(AST);AST=setTimeout(saveNow,1000);updateDeckLinkBtn()}
+function saveNow(){
+  if(!CUR)return;
+  const d=collectForm();
+  EVS[CUR].data=d;
+  EVS[CUR].lastEdit=Date.now();
+  const{filled}=calcPct(d);
+  if(filled>0&&EVS[CUR].status==='ns')EVS[CUR].status='ip';
+  save();refreshDots();refreshChecks();flashAS();
+}
+function flashAS(){const b=document.getElementById('autosave-badge');b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),2200)}
+function updateDeckLinkBtn(){
+  const link=document.getElementById('f-decklink')?.value;
+  const btn=document.getElementById('open-deck-link');
+  if(link&&btn){btn.href=link;btn.style.display='inline'}else if(btn){btn.style.display='none'}
+}
+
+function toggleSec(hdr){const body=hdr.nextElementSibling;const open=body.classList.contains('open');body.classList.toggle('open',!open);hdr.classList.toggle('open',!open)}
+
+function buildDots(){document.getElementById('progress-dots').innerHTML=Array.from({length:11},(_,i)=>`<div class="progress-dot" id="dot${i+1}" title="Section ${i+1}"></div>`).join('')}
+function sectionFilled(d){return[
+  !!(d.evname||'').trim(),
+  !!(d.decmaker||d.attend||d['for']||'').trim(),
+  !!((d.goals||[]).length||(d.primgoal||'').trim()),
+  !!(d.story||d.points||'').trim(),
+  !!((d.vip||[]).length||(d.journey||d.wow||'').trim()),
+  !!(d.access||'').trim(),
+  !!((d.style||[]).length||(d.colors||'').trim()),
+  !!((d.ism||[]).length||(d.testimonials||'').trim()),
+  !!((d.slides||[]).length||(d.decklist||'').trim()),
+  !!(d.cname||'').trim(),
+  !!(d.extra||d.success||'').trim()
+]}
+function refreshDots(){if(!CUR)return;const sf=sectionFilled(collectForm());const status=EVS[CUR]?.status;sf.forEach((f,i)=>{const dot=document.getElementById('dot'+(i+1));if(dot){dot.classList.remove('filled','complete','delivered');if(f){if(status==='dl')dot.classList.add('delivered');else if(status==='sub')dot.classList.add('complete');else dot.classList.add('filled')}}})}
+function refreshChecks(){if(!CUR)return;const sf=sectionFilled(collectForm());sf.forEach((f,i)=>{const ck=document.getElementById('ck'+(i+1));if(ck)ck.classList.toggle('on',f)})}
+
+function tp(el,grp,color){el.classList.toggle('on');if(el.classList.contains('on')&&color)el.classList.add(color);else el.classList.remove('purple','orange','green','blue');onChange()}
+function tdp(el){el.classList.toggle('on');if(el.classList.contains('on')){el.style.borderColor='#C9A84C';el.style.color='#C9A84C';el.style.background='#1C1507'}else el.style.cssText=''}
+
+function setSport(el,key){document.querySelectorAll('.sport-tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.sport-prompts').forEach(p=>p.classList.remove('on'));el.classList.add('on');el.dataset.sport=key;document.getElementById('sp-'+key)?.classList.add('on');onChange()}
+document.querySelectorAll('.sport-tab').forEach((t,i)=>{const keys=['racing','golf','horse','football','tennis'];t.dataset.sport=keys[i]||''});
+
+function updateGenLbl(){document.getElementById('gen-lbl').textContent=document.getElementById('f-genimg')?.checked?'Yes':'No'}
+document.getElementById('f-genimg')?.addEventListener('change',updateGenLbl);
+
+function openDef(){document.getElementById('def-overlay').classList.add('open')}
+function closeDef(){document.getElementById('def-overlay').classList.remove('open')}
+function defOvClick(e){if(e.target.id==='def-overlay')closeDef()}
+function getDefData(){try{return JSON.parse(localStorage.getItem(DK)||'{}')}catch{return{}}}
+function loadDefPanel(){
+  const d=getDefData();
+  if(d.cname)document.getElementById('d-cname').value=d.cname;
+  if(d.cemail)document.getElementById('d-cemail').value=d.cemail;
+  if(d.cphone)document.getElementById('d-cphone').value=d.cphone;
+  if(d.colors)document.getElementById('d-colors').value=d.colors;
+  [['dpg-goals','goals'],['dpg-ism','ism'],['dpg-slides','slides']].forEach(([pgId,key])=>{
+    const vals=d[key]||[];
+    document.querySelectorAll(`#${pgId} .pill`).forEach(p=>{const on=vals.includes(p.dataset.v);p.classList.toggle('on',on);if(on){p.style.borderColor='#C9A84C';p.style.color='#C9A84C';p.style.background='#1C1507'}else p.style.cssText=''});
+  });
+}
+function saveDef(){
+  const d={
+    cname:document.getElementById('d-cname').value,
+    cemail:document.getElementById('d-cemail').value,
+    cphone:document.getElementById('d-cphone').value,
+    colors:document.getElementById('d-colors').value,
+    goals:Array.from(document.querySelectorAll('#dpg-goals .pill.on')).map(p=>p.dataset.v),
+    ism:Array.from(document.querySelectorAll('#dpg-ism .pill.on')).map(p=>p.dataset.v),
+    slides:Array.from(document.querySelectorAll('#dpg-slides .pill.on')).map(p=>p.dataset.v)
+  };
+  localStorage.setItem(DK,JSON.stringify(d));
+  closeDef();toast('✓ ISM Defaults saved (applies to NEW events only)','toast-gold');
+}
+
+function renderNotes(){
+  const list=document.getElementById('notes-list');
+  const notes=EVS[CUR]?.notes||[];
+  if(!notes.length){list.innerHTML='<div style="font-size:11px;color:#555;font-style:italic;padding:8px 0">No notes yet.</div>';return}
+  list.innerHTML=notes.map(n=>`<div class="note-item"><div class="note-meta">${esc(n.date)}</div><div class="note-text">${esc(n.text)}</div></div>`).join('');
+}
+function addNote(){
+  const t=document.getElementById('new-note').value.trim();
+  if(!t||!CUR)return;
+  if(!EVS[CUR].notes)EVS[CUR].notes=[];
+  EVS[CUR].notes.unshift({text:t,date:new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})});
+  EVS[CUR].lastEdit=Date.now();
+  save();
+  document.getElementById('new-note').value='';
+  renderNotes();
+  toast('✓ Note added','toast-gold');
+}
+
+function validate(){
+  const req=[{id:'f-evname',lbl:'Event Name (Section 1)'},{id:'f-cname',lbl:'Contact Name (Section 10)'},{id:'f-deadline',lbl:'Deadline (Section 10)'}];
+  const missing=[];
+  req.forEach(r=>{const el=document.getElementById(r.id);if(!el||!el.value.trim()){if(el){el.classList.add('err');setTimeout(()=>el.classList.remove('err'),3000)}missing.push(r.lbl)}});
+  return missing;
+}
+function buildEmailBody(d,name){
+  const lines=[`ISM VIP DECK BRIEF — ${name}`,`Date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`,``];
+  const a=(lbl,v)=>{if(v&&(Array.isArray(v)?v.length:String(v).trim()))lines.push(`${lbl}: ${Array.isArray(v)?v.join(', '):v}`)};
+  lines.push('— EVENT OVERVIEW —');a('Event Name',d.evname);a('Location',d.loc);a('Date',d.date);a('Sport',d.sport);a('Program',d.prog);a('Budget Tier',d.budget);a('Relationship',d.relationship);a('Decision Date',d.decdate);a('Special',d.special);
+  lines.push('','— TARGET AUDIENCE —');a('Decision Maker',d.decmaker);a('Who attends',d.attend);a('Guest count',d.count);a('Experience level',d.explvl);a('Deck created for',d['for']);a('Sensitivities',d.sensit);
+  lines.push('','— BUSINESS GOALS —');a('Objectives',d.goals);a('Primary goal',d.primgoal);a('Competitors',d.competitors);a('Audience belief',d.belief);a('CTA',d.cta);
+  lines.push('','— CORE MESSAGE —');a('Main story',d.story);a('Key points',d.points);a('Phrases',d.phrases);a('Avoid',d.avoid);
+  lines.push('','— VIP EXPERIENCE —');a('⭐ WOW FACTOR',d.wow);a('Elements',d.vip);a('Guest journey',d.journey);a('Money-can\'t-buy moments',d.moments);a('ISM managed',d.ismmgd);
+  lines.push('','— EVENT ACCESS —');a('Specific access',d.access);
+  lines.push('','— VISUAL DIRECTION —');a('Style',d.style);a('Colors',d.colors);a('Feel',d.feel);a('References',d.refs);a('Generated imagery',d.genimg?'Yes':'No');a('Logos to avoid',d.logoavoid);
+  lines.push('','— CONTENT & PROOF —');a('ISM points',d.ism);a('Testimonials',d.testimonials);a('ROI',d.roi);
+  lines.push('','— SLIDE STRUCTURE —');a('Slides',d.slides);a('Length',d.decklist);a('Format',d.format);
+  lines.push('','— LOGISTICS —');a('Contact',d.cname);a('Company',d.company);a('Email',d.cemail);a('Phone',d.cphone);a('Website',d.website);a('Deadline',d.deadline);a('Final contact slide',d.finalcontact);
+  lines.push('','— FINAL NOTES —');a('Context',d.extra);a('Success criteria',d.success);
+  return lines.join('\n');
+}
+const SHEET_ENDPOINT='https://script.google.com/macros/s/AKfycbwopS86dFDvlMaHiyM6s5_7oDSnVBeW-fIIZPOJ9j8ZOawZZqBEwtzoz23nyH2AHiEVnQ/exec';
+
+async function postToSheet(payload){
+  try{
+    await fetch(SHEET_ENDPOINT,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload)
+    });
+    return true;
+  }catch(e){console.error('Sheet POST failed',e);return false}
+}
+
+async function submitBrief(){
+  const m=validate();
+  if(m.length){alert('Please fill required fields:\n\n'+m.join('\n'));return}
+  saveNow();
+  const ev=EVS[CUR];
+  toast('Submitting…','toast-gold');
+  await postToSheet({
+    eventName:ev.name,
+    status:'Submitted',
+    notesCount:(ev.notes||[]).length,
+    data:ev.data
+  });
+  EVS[CUR].status='sub';save();refreshDots();
+  toast('✓ Brief submitted to ISM team','toast-green');
+}
+
+async function markDelivered(){
+  if(!CUR)return;
+  const ev=EVS[CUR];
+  const link=document.getElementById('f-decklink')?.value;
+  if(!link){if(!confirm('No deck link added yet. Mark as delivered anyway?'))return}
+  saveNow();
+  toast('Updating…','toast-gold');
+  await postToSheet({
+    eventName:ev.name,
+    status:'Deck Delivered',
+    notesCount:(ev.notes||[]).length,
+    data:ev.data
+  });
+  EVS[CUR].status='dl';save();refreshDots();
+  toast('✓ Marked as Deck Delivered','toast-purple');
+}
+
+function save(){localStorage.setItem(EK,JSON.stringify(EVS))}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(msg,cls){const t=document.createElement('div');t.className=`toast ${cls}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+</script>
+</body>
+</html>
