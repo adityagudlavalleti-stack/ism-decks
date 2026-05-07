@@ -26,6 +26,12 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
 .header-left .eyebrow{font-size:10px;letter-spacing:3px;color:#C9A84C;text-transform:uppercase;margin-bottom:4px}
 .header-left h1{font-size:22px;font-weight:900;color:#fff}
 .header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:#C9A84C;animation:pulse .8s infinite alternate}
+.sync-dot.synced{background:#27ae60}
+.sync-dot.error{background:#e74c3c}
+.sync-lbl{font-size:10px;color:#555;letter-spacing:1px}
+@keyframes pulse{from{opacity:.4}to{opacity:1}}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
 .btn-gold{background:#C9A84C;color:#000}.btn-gold:hover{opacity:.85}
 .btn-outline{background:transparent;color:#C9A84C;border:1px solid #C9A84C}.btn-outline:hover{background:#1C1507}
@@ -279,6 +285,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
       </div>
     </div>
     <div class="header-actions">
+      <div style="display:flex;align-items:center;gap:6px"><div class="sync-dot" id="sync-dot"></div><span class="sync-lbl" id="sync-lbl">Loading…</span></div>
       <button class="btn btn-ghost" onclick="exportAllCSV()">↓ Export CSV</button>
       <button class="btn btn-ghost" onclick="openDef()">⚙ ISM Defaults</button>
       <button class="btn btn-outline" onclick="openAdd()">+ Add Event</button>
@@ -846,6 +853,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
 <script>
 const PW='9581c48c70f3fa588ef477e5e757401e3115a108a13a3d264e80bf7c25c533a8';
 const EK='ism_events',DK='ism_defaults';
+let SHEET_URL=''; // set after Apps Script redeploy
 const DEFAULT_DEFAULTS={
   goals:['dealclose','retention','hospitality','execnet'],
   ism:['29yrs','premhosp','execent','relaccess','turnkey','aviation','multicity','customcorp'],
@@ -870,14 +878,57 @@ async function tryUnlock(){
 document.getElementById('lock-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
 if(sessionStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden')}
 
+// ── SHEET SYNC ────────────────────────────────────────
+function setSyncState(state,label){
+  const dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-lbl');
+  if(!dot)return;
+  dot.className='sync-dot '+state;
+  if(lbl)lbl.textContent=label;
+}
+async function syncFromSheet(){
+  if(!SHEET_URL){setSyncState('error','Not connected');return}
+  setSyncState('syncing','Syncing…');
+  try{
+    const r=await fetch(SHEET_URL+'?t='+Date.now());
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const json=await r.json();
+    if(json.events){
+      let changed=false;
+      Object.entries(json.events).forEach(([id,shEv])=>{
+        const loc=EVS[id];
+        if(!loc||(Number(shEv.lastEdit)||0)>(Number(loc.lastEdit)||0)){EVS[id]=shEv;changed=true}
+      });
+      if(changed){save();renderDash()}
+      setSyncState('synced','Synced ✓');
+    }else throw new Error(json.error||'bad response');
+  }catch(e){setSyncState('error','Offline');console.warn('Sync failed',e)}
+}
+let _sheetTimer={};
+function scheduleSheetSync(id){
+  clearTimeout(_sheetTimer[id]);
+  setSyncState('syncing','Saving…');
+  _sheetTimer[id]=setTimeout(()=>pushToSheet(id),5000);
+}
+async function pushToSheet(id){
+  if(!SHEET_URL||!EVS[id])return;
+  const ev=EVS[id];
+  try{
+    await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'save',id,name:ev.name,status:ev.status,created:ev.created,lastEdit:ev.lastEdit||Date.now(),data:ev.data||{},notes:ev.notes||[]})});
+    setSyncState('synced','Saved ✓');
+  }catch(e){setSyncState('error','Save failed');console.warn(e)}
+}
+async function deleteFromSheet(id){
+  if(!SHEET_URL)return;
+  try{await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'delete',id})})}catch(e){console.warn(e)}
+}
+
 function init(){
   try{EVS=JSON.parse(localStorage.getItem(EK)||'{}')}catch{EVS={}}
-  // seed defaults if first run
-  if(!localStorage.getItem(DK)){
-    localStorage.setItem(DK,JSON.stringify(DEFAULT_DEFAULTS));
-  }
+  if(!localStorage.getItem(DK))localStorage.setItem(DK,JSON.stringify(DEFAULT_DEFAULTS));
   renderDash();
   loadDefPanel();
+  SHEET_URL?syncFromSheet():setSyncState('error','Sheet not configured');
 }
 window.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('ism_auth')==='1')init()});
 
@@ -1017,10 +1068,11 @@ function confirmAdd(){
   if(def.slides&&def.slides.length)data.slides=def.slides;
   EVS[id]={name,status:'ns',created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),lastEdit:Date.now(),data,notes:[]};
   save();closeAdd();openEv(id);
+  pushToSheet(id);
 }
 function promptDel(id){DEL_ID=id;document.getElementById('del-msg').textContent=`"${esc(EVS[id].name)}" and all answers will be permanently deleted.`;document.getElementById('del-overlay').classList.add('open')}
 function closeDel(){document.getElementById('del-overlay').classList.remove('open');DEL_ID=null}
-function confirmDel(){if(!DEL_ID)return;delete EVS[DEL_ID];save();closeDel();if(CUR===DEL_ID)backToDash();else renderDash()}
+function confirmDel(){if(!DEL_ID)return;const id=DEL_ID;delete EVS[id];save();closeDel();deleteFromSheet(id);if(CUR===id)backToDash();else renderDash()}
 
 function openEv(id){
   CUR=id;
@@ -1091,6 +1143,7 @@ function saveNow(){
   const{filled}=calcPct(d);
   if(filled>0&&EVS[CUR].status==='ns')EVS[CUR].status='ip';
   save();refreshDots();refreshChecks();flashAS();
+  scheduleSheetSync(CUR);
 }
 function flashAS(){const b=document.getElementById('autosave-badge');b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),2200)}
 function updateDeckLinkBtn(){
@@ -1222,7 +1275,7 @@ async function submitBrief(){
     notesCount:(ev.notes||[]).length,
     data:ev.data
   });
-  EVS[CUR].status='sub';save();refreshDots();
+  EVS[CUR].status='sub';save();refreshDots();pushToSheet(CUR);
   toast('✓ Brief submitted to ISM team','toast-green');
 }
 
@@ -1239,7 +1292,7 @@ async function markDelivered(){
     notesCount:(ev.notes||[]).length,
     data:ev.data
   });
-  EVS[CUR].status='dl';save();refreshDots();
+  EVS[CUR].status='dl';save();refreshDots();pushToSheet(CUR);
   toast('✓ Marked as Deck Delivered','toast-purple');
 }
 
