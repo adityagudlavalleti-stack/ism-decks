@@ -881,8 +881,6 @@ async function tryUnlock(){
   }
 }
 document.getElementById('lock-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
-if(localStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden')}
-
 // ── SHEET SYNC ────────────────────────────────────────
 function setSyncState(state,label){
   const dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-lbl');
@@ -935,7 +933,8 @@ function init(){
   loadDefPanel();
   SHEET_URL?syncFromSheet():setSyncState('error','Sheet not configured');
 }
-window.addEventListener('DOMContentLoaded',()=>{if(localStorage.getItem('ism_auth')==='1')init()});
+// Script is at end of body — DOM is ready, call init directly if authed
+if(localStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden');init();}
 
 let _statusFilter='all';
 function setStatusFilter(el){
