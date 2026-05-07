@@ -1296,7 +1296,7 @@ async function submitBrief(){
   toast('✓ Brief submitted — written to Submitted Briefs tab','toast-green');
 }
 
-function markDelivered(){
+async function markDelivered(){
   if(!CUR)return;
   const ev=EVS[CUR];
   const link=document.getElementById('f-decklink')?.value;
