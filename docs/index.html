@@ -1148,6 +1148,7 @@ function collectForm(){
 function attachSave(){
   TF.forEach(k=>{const el=document.getElementById('f-'+k);if(el){el.removeEventListener('input',onChange);el.addEventListener('input',onChange)}});
   document.getElementById('f-genimg')?.addEventListener('change',onChange);
+  document.getElementById('f-clientapproved')?.addEventListener('change',onChange);
 }
 function onChange(){clearTimeout(AST);AST=setTimeout(saveNow,1000);updateDeckLinkBtn()}
 function saveNow(){
@@ -1295,7 +1296,7 @@ async function submitBrief(){
   toast('✓ Brief submitted — written to Submitted Briefs tab','toast-green');
 }
 
-async function markDelivered(){
+function markDelivered(){
   if(!CUR)return;
   const ev=EVS[CUR];
   const link=document.getElementById('f-decklink')?.value;
@@ -1315,6 +1316,7 @@ async function markDelivered(){
 function save(){localStorage.setItem(EK,JSON.stringify(EVS))}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(msg,cls){const t=document.createElement('div');t.className=`toast ${cls}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 
 // ── PREVIEW ───────────────────────────────────────────
 function openPreview(){
@@ -1374,7 +1376,7 @@ function validateName(el){
 
 function validateEmail(el){
   const v=el.value.trim();
-  const errId='err-cemail';
+  const errId='err-'+el.id.replace('f-','');
   if(!v){el.classList.remove('invalid','valid');showErr(errId,false);return true}
   const ok=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
   el.classList.toggle('invalid',!ok);
