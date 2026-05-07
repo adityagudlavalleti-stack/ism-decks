@@ -70,6 +70,18 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
 .notes-indicator{font-size:10px;color:#C9A84C;margin-top:6px}
 .event-card-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid #1a1a1a}
 
+/* ── VALIDATION ──────────────────────────────────────── */
+.fi.invalid,.fta.invalid,.fsel.invalid{border-color:#e74c3c!important}
+.fi.valid{border-color:#27ae60}
+.field-error{font-size:11px;color:#e74c3c;margin-top:4px;display:none}
+.field-error.show{display:block}
+.char-counter{font-size:10px;color:#555;margin-top:4px;text-align:right}
+.char-counter.near{color:#e67e22}
+.char-counter.over{color:#e74c3c}
+input[type="date"].fi{color-scheme:dark}
+input[type="number"].fi{-moz-appearance:textfield}
+input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
+
 #view-form{display:none}
 #view-form.active{display:block}
 .form-header{background:#000;border-bottom:3px solid #C9A84C;padding:16px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
@@ -288,11 +300,36 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
         <div class="fg"><div class="flabel">Event Name <span class="req">*</span></div><input class="fi" id="f-evname" placeholder="e.g. Daytona 500 VIP Experience 2026"></div>
         <div class="frow">
           <div class="fg"><div class="flabel">Location / Venue</div><input class="fi" id="f-loc" placeholder="City, Venue"></div>
-          <div class="fg"><div class="flabel">Date or Season</div><input class="fi" id="f-date" placeholder="e.g. Feb 15, 2026"></div>
+          <div class="fg"><div class="flabel">Event Date</div><input class="fi" id="f-date" type="date"></div>
         </div>
         <div class="frow-3">
-          <div class="fg"><div class="flabel">Sport / Category</div><input class="fi" id="f-sport" placeholder="e.g. NASCAR, Golf"></div>
-          <div class="fg"><div class="flabel">One-time or Program</div><input class="fi" id="f-prog" placeholder="e.g. Annual"></div>
+          <div class="fg"><div class="flabel">Sport / Category</div>
+            <select class="fsel" id="f-sport">
+              <option value="">— Select —</option>
+              <option>NASCAR / Motorsports</option>
+              <option>Golf</option>
+              <option>Tennis</option>
+              <option>Horse Racing</option>
+              <option>Football / NFL</option>
+              <option>Formula 1</option>
+              <option>Boxing / Combat Sports</option>
+              <option>Basketball / NBA</option>
+              <option>Baseball / MLB</option>
+              <option>Soccer / MLS</option>
+              <option>Multi-sport</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="fg"><div class="flabel">One-time or Program</div>
+            <select class="fsel" id="f-prog">
+              <option value="">— Select —</option>
+              <option>One-time event</option>
+              <option>Annual series</option>
+              <option>Multi-event program</option>
+              <option>Season package</option>
+              <option>TBD</option>
+            </select>
+          </div>
           <div class="fg"><div class="flabel">Budget Tier</div>
             <select class="fsel" id="f-budget">
               <option value="">— Select —</option>
@@ -313,7 +350,7 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
               <option>Re-engagement</option>
             </select>
           </div>
-          <div class="fg"><div class="flabel">Decision Date (when must they say yes?)</div><input class="fi" id="f-decdate" placeholder="e.g. by April 30, 2026"></div>
+          <div class="fg"><div class="flabel">Decision Date (when must they say yes?)</div><input class="fi" id="f-decdate" type="date"><div class="field-error" id="err-decdate">Decision date cannot be after the event date</div></div>
         </div>
         <div class="fg"><div class="flabel">What makes this event special or premium?</div><textarea class="fta" id="f-special" placeholder="What differentiates this experience..."></textarea></div>
       </div>
@@ -327,12 +364,21 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
       </div>
       <div class="section-body">
         <div class="frow">
-          <div class="fg"><div class="flabel">Decision Maker (who approves the deal)</div><input class="fi" id="f-decmaker" placeholder="e.g. CMO, Head of Marketing"></div>
+          <div class="fg"><div class="flabel">Decision Maker (who approves the deal)</div><input class="fi" id="f-decmaker" placeholder="e.g. CMO, Head of Marketing" oninput="validateName(this)" onblur="validateName(this)"><div class="field-error" id="err-decmaker">Names should not contain numbers or special characters</div></div>
           <div class="fg"><div class="flabel">Who will actually attend?</div><input class="fi" id="f-attend" placeholder="e.g. C-suite executives + spouses"></div>
         </div>
         <div class="frow-3">
-          <div class="fg"><div class="flabel">Approximate Guest Count</div><input class="fi" id="f-count" placeholder="e.g. 8–12"></div>
-          <div class="fg"><div class="flabel">Experience Level</div><input class="fi" id="f-explvl" placeholder="e.g. First-time VIPs"></div>
+          <div class="fg"><div class="flabel">Approximate Guest Count</div><input class="fi" id="f-count" type="number" min="1" max="500" placeholder="e.g. 12"><div class="field-error" id="err-count">Enter a number between 1 and 500</div></div>
+          <div class="fg"><div class="flabel">Experience Level</div>
+            <select class="fsel" id="f-explvl">
+              <option value="">— Select —</option>
+              <option>First-time VIPs</option>
+              <option>Returning guests</option>
+              <option>Mixed (some new, some returning)</option>
+              <option>Seasoned VIPs</option>
+              <option>Unknown</option>
+            </select>
+          </div>
           <div class="fg"><div class="flabel">Who is this deck created for?</div><input class="fi" id="f-for" placeholder="e.g. Sponsorship prospect"></div>
         </div>
         <div class="fg"><div class="flabel">Preferences or sensitivities we should know?</div><textarea class="fta" id="f-sensit" placeholder="Dietary, accessibility, cultural considerations..."></textarea></div>
@@ -377,8 +423,8 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
         <span class="scheck" id="ck4">✓</span><span class="chevron">▼</span>
       </div>
       <div class="section-body">
-        <div class="fg"><div class="flabel">What is the main story we want this deck to tell?</div><textarea class="fta" id="f-story" placeholder="The central narrative thread..."></textarea></div>
-        <div class="fg"><div class="flabel">Top 3–5 points we must communicate</div><textarea class="fta" id="f-points" placeholder="1.&#10;2.&#10;3.&#10;4.&#10;5." style="min-height:100px"></textarea></div>
+        <div class="fg"><div class="flabel">What is the main story we want this deck to tell?</div><textarea class="fta" id="f-story" placeholder="The central narrative thread..." maxlength="2000" oninput="updateCounter(this,'ctr-story',2000)"></textarea><div class="char-counter" id="ctr-story">0 / 2000</div></div>
+        <div class="fg"><div class="flabel">Top 3–5 points we must communicate</div><textarea class="fta" id="f-points" placeholder="1.&#10;2.&#10;3.&#10;4.&#10;5." style="min-height:100px" maxlength="1000" oninput="updateCounter(this,'ctr-points',1000)"></textarea><div class="char-counter" id="ctr-points">0 / 1000</div></div>
         <div class="fg"><div class="flabel">Phrases, themes, or positioning statements to include</div><textarea class="fta" id="f-phrases" placeholder="Specific language, taglines, themes..."></textarea></div>
         <div class="fg"><div class="flabel">Words, names, brands, or claims to avoid</div><textarea class="fta" id="f-avoid" placeholder="Competitor brands, sensitive terms, legal restrictions..."></textarea></div>
       </div>
@@ -422,7 +468,7 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
             <span class="pill" data-v="other" onclick="tp(this,'vip','orange')">Other</span>
           </div>
         </div>
-        <div class="fg"><div class="flabel">Describe the full guest journey from arrival to departure</div><textarea class="fta" id="f-journey" placeholder="Walk through the experience chronologically..." style="min-height:100px"></textarea></div>
+        <div class="fg"><div class="flabel">Describe the full guest journey from arrival to departure</div><textarea class="fta" id="f-journey" placeholder="Walk through the experience chronologically..." style="min-height:100px" maxlength="2000" oninput="updateCounter(this,'ctr-journey',2000)"></textarea><div class="char-counter" id="ctr-journey">0 / 2000</div></div>
         <div class="fg"><div class="flabel">Other "money-can't-buy" moments</div><textarea class="fta" id="f-moments" placeholder="Other access or moments no one else can offer..."></textarea></div>
         <div class="fg"><div class="flabel">What parts of the experience are fully managed by ISM?</div><textarea class="fta" id="f-ismmgd" placeholder="Logistics, concierge, coordination handled end-to-end..."></textarea></div>
       </div>
@@ -546,8 +592,18 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
           </div>
         </div>
         <div class="frow">
-          <div class="fg"><div class="flabel">Preferred Deck Length</div><input class="fi" id="f-decklist" placeholder="e.g. 12–15 slides"></div>
-          <div class="fg"><div class="flabel">Final Deliverable Format</div><input class="fi" id="f-format" placeholder="e.g. PowerPoint, Google Slides, PDF"></div>
+          <div class="fg"><div class="flabel">Preferred Deck Length (slides)</div><input class="fi" id="f-decklist" type="number" min="5" max="60" placeholder="e.g. 12"><div class="field-error" id="err-decklist">Enter a number between 5 and 60</div></div>
+          <div class="fg"><div class="flabel">Final Deliverable Format</div>
+            <select class="fsel" id="f-format">
+              <option value="">— Select —</option>
+              <option>PowerPoint (.pptx)</option>
+              <option>Google Slides</option>
+              <option>PDF</option>
+              <option>PowerPoint + PDF</option>
+              <option>Google Slides + PDF</option>
+              <option>All formats</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
@@ -560,16 +616,16 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
       </div>
       <div class="section-body">
         <div class="frow">
-          <div class="fg"><div class="flabel">Primary Contact Name <span class="req">*</span> <span class="def-tag" id="dt-cname">DEFAULT</span></div><input class="fi" id="f-cname" placeholder="Full name"></div>
+          <div class="fg"><div class="flabel">Primary Contact Name <span class="req">*</span> <span class="def-tag" id="dt-cname">DEFAULT</span></div><input class="fi" id="f-cname" placeholder="Full name" oninput="validateName(this)" onblur="validateName(this)"><div class="field-error" id="err-cname">Enter a valid name (letters only, min 2 characters)</div></div>
           <div class="fg"><div class="flabel">Company / Organization</div><input class="fi" id="f-company" placeholder="Company name"></div>
         </div>
         <div class="frow">
-          <div class="fg"><div class="flabel">Email <span class="def-tag" id="dt-cemail">DEFAULT</span></div><input class="fi" id="f-cemail" type="email" placeholder="email@company.com"></div>
-          <div class="fg"><div class="flabel">Phone <span class="def-tag" id="dt-cphone">DEFAULT</span></div><input class="fi" id="f-cphone" placeholder="+1 (___) ___-____"></div>
+          <div class="fg"><div class="flabel">Email <span class="req">*</span> <span class="def-tag" id="dt-cemail">DEFAULT</span></div><input class="fi" id="f-cemail" type="email" placeholder="email@company.com" onblur="validateEmail(this)" oninput="validateEmail(this)"><div class="field-error" id="err-cemail">Enter a valid email address (e.g. name@company.com)</div></div>
+          <div class="fg"><div class="flabel">Phone <span class="def-tag" id="dt-cphone">DEFAULT</span></div><input class="fi" id="f-cphone" placeholder="+1 (___) ___-____" oninput="formatPhone(this)" onblur="validatePhone(this)"><div class="field-error" id="err-cphone">Enter a valid phone number</div></div>
         </div>
         <div class="frow">
-          <div class="fg"><div class="flabel">Website</div><input class="fi" id="f-website" placeholder="https://..."></div>
-          <div class="fg"><div class="flabel">Deadline for the Deck <span class="req">*</span></div><input class="fi" id="f-deadline" placeholder="e.g. May 15, 2026"></div>
+          <div class="fg"><div class="flabel">Website</div><input class="fi" id="f-website" placeholder="https://..." onblur="validateURL(this,'err-website')"><div class="field-error" id="err-website">Enter a valid URL starting with https://</div></div>
+          <div class="fg"><div class="flabel">Deadline for the Deck <span class="req">*</span></div><input class="fi" id="f-deadline" type="date" min=""><div class="field-error" id="err-deadline">Deadline is required</div></div>
         </div>
         <div class="fg"><div class="flabel">Who should be listed on the final contact slide?</div><input class="fi" id="f-finalcontact" placeholder="Name, title, and contact info for the deck's last slide"></div>
       </div>
@@ -1055,6 +1111,106 @@ async function markDelivered(){
 function save(){localStorage.setItem(EK,JSON.stringify(EVS))}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(msg,cls){const t=document.createElement('div');t.className=`toast ${cls}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+// ── VALIDATION ────────────────────────────────────────
+function showErr(errId,show){const e=document.getElementById(errId);if(e)e.classList.toggle('show',show)}
+
+function validateName(el){
+  const v=el.value.trim();
+  const errId='err-'+el.id.replace('f-','');
+  if(!v){el.classList.remove('invalid','valid');showErr(errId,false);return true}
+  const ok=v.length>=2&&!/[\d@#$%^&*()+=\[\]{}<>\/\\|`~]/.test(v);
+  el.classList.toggle('invalid',!ok);
+  el.classList.toggle('valid',ok);
+  showErr(errId,!ok);
+  return ok;
+}
+
+function validateEmail(el){
+  const v=el.value.trim();
+  const errId='err-cemail';
+  if(!v){el.classList.remove('invalid','valid');showErr(errId,false);return true}
+  const ok=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  el.classList.toggle('invalid',!ok);
+  el.classList.toggle('valid',ok);
+  showErr(errId,!ok);
+  return ok;
+}
+
+function formatPhone(el){
+  let v=el.value.replace(/[^\d+]/g,'');
+  if(v.startsWith('+1')&&v.length>2){
+    const n=v.slice(2).replace(/\D/g,'');
+    if(n.length<=3) el.value=`+1 (${n}`;
+    else if(n.length<=6) el.value=`+1 (${n.slice(0,3)}) ${n.slice(3)}`;
+    else el.value=`+1 (${n.slice(0,3)}) ${n.slice(3,6)}-${n.slice(6,10)}`;
+  }
+}
+function validatePhone(el){
+  const v=el.value.trim();
+  if(!v){el.classList.remove('invalid','valid');showErr('err-cphone',false);return true}
+  const digits=v.replace(/\D/g,'');
+  const ok=digits.length>=10&&digits.length<=15;
+  el.classList.toggle('invalid',!ok);
+  el.classList.toggle('valid',ok);
+  showErr('err-cphone',!ok);
+  return ok;
+}
+
+function validateURL(el,errId){
+  const v=el.value.trim();
+  if(!v){el.classList.remove('invalid','valid');showErr(errId,false);return true}
+  const ok=/^https?:\/\/.+\..+/.test(v);
+  el.classList.toggle('invalid',!ok);
+  el.classList.toggle('valid',ok);
+  showErr(errId,!ok);
+  return ok;
+}
+
+function validateDates(){
+  const evDate=document.getElementById('f-date')?.value;
+  const decDate=document.getElementById('f-decdate')?.value;
+  if(evDate&&decDate&&decDate>evDate){
+    document.getElementById('f-decdate').classList.add('invalid');
+    showErr('err-decdate',true);
+    return false;
+  }
+  document.getElementById('f-decdate')?.classList.remove('invalid');
+  showErr('err-decdate',false);
+  return true;
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('f-date')?.addEventListener('change',validateDates);
+  document.getElementById('f-decdate')?.addEventListener('change',validateDates);
+  // Set min date for deadline = today
+  const today=new Date().toISOString().split('T')[0];
+  const dl=document.getElementById('f-deadline');
+  if(dl)dl.min=today;
+});
+
+function validateNumber(el,errId,min,max){
+  const v=parseInt(el.value);
+  if(!el.value){el.classList.remove('invalid','valid');showErr(errId,false);return true}
+  const ok=!isNaN(v)&&v>=min&&v<=max;
+  el.classList.toggle('invalid',!ok);
+  el.classList.toggle('valid',ok);
+  showErr(errId,!ok);
+  return ok;
+}
+// Wire number validation
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('f-count')?.addEventListener('blur',()=>validateNumber(document.getElementById('f-count'),'err-count',1,500));
+  document.getElementById('f-decklist')?.addEventListener('blur',()=>validateNumber(document.getElementById('f-decklist'),'err-decklist',5,60));
+});
+
+function updateCounter(el,ctrId,max){
+  const ctr=document.getElementById(ctrId);
+  if(!ctr)return;
+  const len=el.value.length;
+  ctr.textContent=`${len.toLocaleString()} / ${max.toLocaleString()}`;
+  ctr.classList.toggle('near',len>=max*0.8&&len<max);
+  ctr.classList.toggle('over',len>=max);
+}
 </script>
 </body>
 </html>
