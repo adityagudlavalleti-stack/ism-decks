@@ -50,11 +50,12 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
 .stat-ip .stat-num{color:#C9A84C}
 .stat-sub .stat-num{color:#27ae60}
 .stat-dl .stat-num{color:#9B59B6}
+.stat-dip .stat-num{color:#00bcd4}
 .dashboard-main{padding:28px}
 .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin-top:20px}
 .empty-state{text-align:center;padding:60px 20px;color:#555;grid-column:1/-1}
 .empty-icon{font-size:48px;margin-bottom:12px}
-.filter-bar{padding:16px 28px;background:#0e0e0e;border-bottom:1px solid #2a2a2a;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filter-bar{padding:12px 28px;background:#0e0e0e;border-bottom:1px solid #2a2a2a;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .filter-search{background:#111;border:1px solid #2a2a2a;color:#e0e0e0;padding:8px 12px;border-radius:4px;font-size:13px;outline:none;width:220px}
 .filter-search:focus{border-color:#C9A84C}
 .filter-pill{padding:5px 12px;border-radius:20px;border:1px solid #333;background:#111;color:#777;font-size:11px;font-weight:700;cursor:pointer;transition:all .18s}
@@ -81,6 +82,7 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
 .s-ip{background:#1C1507;color:#C9A84C;border:1px solid #C9A84C}
 .s-sub{background:#071507;color:#27ae60;border:1px solid #27ae60}
 .s-dl{background:#180b28;color:#9B59B6;border:1px solid #9B59B6}
+.s-dip{background:#071a1f;color:#00bcd4;border:1px solid #00bcd4}
 .progress-bar-wrap{background:#222;border-radius:2px;height:4px;margin-bottom:8px;overflow:hidden}
 .progress-bar-fill{height:100%;background:#C9A84C;border-radius:2px;transition:width .3s}
 .progress-bar-fill.done{background:#27ae60}
@@ -298,6 +300,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
     <span class="filter-pill" data-status="ns" onclick="setStatusFilter(this)">Not Started</span>
     <span class="filter-pill" data-status="ip" onclick="setStatusFilter(this)">In Progress</span>
     <span class="filter-pill" data-status="sub" onclick="setStatusFilter(this)">Submitted</span>
+    <span class="filter-pill" data-status="dip" onclick="setStatusFilter(this)">Building</span>
     <span class="filter-pill" data-status="dl" onclick="setStatusFilter(this)">Delivered</span>
     <div class="filter-sep"></div>
     <select class="sort-sel" id="sort-sel" onchange="applyFilters()">
@@ -313,6 +316,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
     <div class="stat-item stat-ns"><div class="stat-num" id="sn-ns">0</div><div class="stat-label">Not Started</div></div>
     <div class="stat-item stat-ip"><div class="stat-num" id="sn-ip">0</div><div class="stat-label">In Progress</div></div>
     <div class="stat-item stat-sub"><div class="stat-num" id="sn-sub">0</div><div class="stat-label">Submitted</div></div>
+    <div class="stat-item stat-dip"><div class="stat-num" id="sn-dip">0</div><div class="stat-label">Building</div></div>
     <div class="stat-item stat-dl"><div class="stat-num" id="sn-dl">0</div><div class="stat-label">Delivered</div></div>
   </div>
   <div class="dashboard-main">
@@ -743,7 +747,8 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
       <h3>Ready to submit this brief?</h3>
       <p>Sends the brief to ISM for the deck build. Required fields must be filled first.</p>
       <div class="submit-actions">
-        <button class="btn btn-ghost" onclick="markDelivered()">✓ Mark Deck Delivered</button>
+        <button class="btn btn-ghost" onclick="markDeckInProgress()">🔨 Mark Deck In Progress</button>
+      <button class="btn btn-ghost" onclick="markDelivered()">✓ Mark Deck Delivered</button>
         <button class="btn btn-outline" onclick="openPreview()">👁 Preview Brief</button>
         <button class="btn btn-gold" onclick="submitBrief()">✉ Submit Brief</button>
       </div>
@@ -865,7 +870,7 @@ async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEn
 async function tryUnlock(){
   const v=document.getElementById('lock-input').value;
   if(await sha256(v)===PW){
-    sessionStorage.setItem('ism_auth','1');
+    localStorage.setItem('ism_auth','1');
     document.getElementById('lock-screen').classList.add('hidden');
     init();
   }else{
@@ -876,7 +881,7 @@ async function tryUnlock(){
   }
 }
 document.getElementById('lock-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
-if(sessionStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden')}
+if(localStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden')}
 
 // ── SHEET SYNC ────────────────────────────────────────
 function setSyncState(state,label){
@@ -930,7 +935,7 @@ function init(){
   loadDefPanel();
   SHEET_URL?syncFromSheet():setSyncState('error','Sheet not configured');
 }
-window.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('ism_auth')==='1')init()});
+window.addEventListener('DOMContentLoaded',()=>{if(localStorage.getItem('ism_auth')==='1')init()});
 
 let _statusFilter='all';
 function setStatusFilter(el){
@@ -960,19 +965,21 @@ function applyFilters(){
   const ns=allIds.filter(i=>EVS[i].status==='ns').length;
   const ip=allIds.filter(i=>EVS[i].status==='ip').length;
   const sub=allIds.filter(i=>EVS[i].status==='sub').length;
+  const dip=allIds.filter(i=>EVS[i].status==='dip').length;
   const dl=allIds.filter(i=>EVS[i].status==='dl').length;
   document.getElementById('sn-total').textContent=allIds.length;
   document.getElementById('sn-ns').textContent=ns;
   document.getElementById('sn-ip').textContent=ip;
   document.getElementById('sn-sub').textContent=sub;
+  document.getElementById('sn-dip').textContent=dip;
   document.getElementById('sn-dl').textContent=dl;
   const g=document.getElementById('events-grid');
   if(!ids.length){g.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><p>'+(allIds.length?'No events match your filter.':'No events yet. Click <strong>+ Add Event</strong> to get started.')+'</p></div>';return}
   g.innerHTML=ids.map(id=>{
     const ev=EVS[id],d=ev.data||{},{pct,filled}=calcPct(d);
-    const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dl:'Deck Delivered'}[ev.status]||'Not Started';
-    const scls={ns:'s-ns',ip:'s-ip',sub:'s-sub',dl:'s-dl'}[ev.status]||'s-ns';
-    const barCls=ev.status==='dl'?'delivered':(ev.status==='sub'?'done':'');
+    const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dip:'🔨 Building',dl:'Deck Delivered'}[ev.status]||'Not Started';
+    const scls={ns:'s-ns',ip:'s-ip',sub:'s-sub',dip:'s-dip',dl:'s-dl'}[ev.status]||'s-ns';
+    const barCls=ev.status==='dl'?'delivered':(ev.status==='sub'||ev.status==='dip'?'done':'');
     const noteCount=(ev.notes||[]).length;
     const lastEdit=ev.lastEdit?`Edited ${timeAgo(ev.lastEdit)}`:`Created ${ev.created}`;
     const deckLink=d.decklink?`<div class="deck-link-row">📎 <a href="${esc(d.decklink)}" target="_blank">${esc(shortUrl(d.decklink))}</a></div>`:'';
@@ -1008,15 +1015,24 @@ function deadlineUrgency(dl){
   return(days>=0&&days<=7)?days:null;
 }
 
+function markDeckInProgress(){
+  if(!CUR)return;
+  EVS[CUR].status='dip';save();refreshDots();pushToSheet(CUR);
+  toast('🔨 Marked as Deck In Progress','toast-gold');
+}
+
 function duplicateEv(id){
   const src=EVS[id];
   const newId='ev'+Date.now();
+  const dataCopy=JSON.parse(JSON.stringify(src.data||{}));
+  delete dataCopy.decklink;
+  dataCopy.clientapproved=false;
   EVS[newId]={
     name:src.name+' (Copy)',
     status:'ns',
     created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
     lastEdit:Date.now(),
-    data:{...JSON.parse(JSON.stringify(src.data||{}))},
+    data:dataCopy,
     notes:[]
   };
   save();renderDash();
@@ -1266,6 +1282,9 @@ async function postToSheet(payload){
 async function submitBrief(){
   const m=validate();
   if(m.length){alert('Please fill required fields:\n\n'+m.join('\n'));return}
+  const d=collectForm();
+  const filled=sectionFilled(d).filter(Boolean).length;
+  if(filled<7&&!confirm(`This brief is only ${Math.round(filled/11*100)}% complete (${filled}/11 sections). Submit anyway?`))return;
   saveNow();
   const ev=EVS[CUR];
   toast('Submitting…','toast-gold');
@@ -1339,12 +1358,12 @@ function exportAllCSV(){
   const arr=v=>Array.isArray(v)?v.join('; '):(v||'');
   const rows=ids.map(id=>{
     const ev=EVS[id],d=ev.data||{},{filled}=calcPct(d);
-    const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dl:'Deck Delivered'}[ev.status]||'';
+    const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dip:'Building',dl:'Deck Delivered'}[ev.status]||'';
     return[ev.name,slbl,d.priority||'',d.assignedto||'',ev.created,ev.lastEdit?new Date(ev.lastEdit).toLocaleDateString():'',`${filled}/11`,d.deadline||'',arr(d.sport),d.budget||'',d.relationship||'',d.decmaker||'',d.count||'',arr(d.explvl),arr(d.goals),d.primgoal||'',d.wow||'',arr(d.style),d.colors||'',arr(d.ism),arr(d.slides),d.decklist?d.decklist+' slides':'',arr(d.format),d.cname||'',d.company||'',d.cemail||'',d.clientemail||'',d.cphone||'',d.website||'',d.clientapproved?'Yes':'No',d.decklink||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
   });
-  const csv=[headers.map(h=>`"${h}"`).join(','),...rows].join('\n');
+  const csv='﻿'+[headers.map(h=>`"${h}"`).join(','),...rows].join('\n');
   const dt=new Date().toISOString().split('T')[0];
-  dl(`ISM_All_Events_${dt}.csv`,csv,'text/csv');
+  dl(`ISM_All_Events_${dt}.csv`,csv,'text/csv;charset=utf-8');
   toast(`Exported ${ids.length} events`,'toast-gold');
 }
 

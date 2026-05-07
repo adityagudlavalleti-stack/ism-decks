@@ -29,10 +29,13 @@ When Aditya says "pull the [event name] brief", run:
 $url = "https://script.google.com/macros/s/AKfycbztbivNpsxTEeUoeF2XKGpVcjs8EP8GHkvNB8P-CUEUWdPvbAWVj0eUw1wHNM3xNXVl8A/exec?tab=submitted"
 $r = Invoke-WebRequest -Uri $url -Method GET -MaximumRedirection 10 -UseBasicParsing
 $data = $r.Content | ConvertFrom-Json
-$brief = $data.rows | Where-Object { $_.'Event Name' -like "*[EVENT NAME]*" }
-$brief.PSObject.Properties | ForEach-Object { if($_.Value) { Write-Host "$($_.Name): $($_.Value)" } }
+# Fuzzy match — finds closest name regardless of exact wording
+$keyword = "KEYWORD" # replace with word from event name e.g. "Daytona"
+$brief = $data.rows | Where-Object { $_.'Event Name' -like "*$keyword*" } | Select-Object -First 1
+if(!$brief){ Write-Host "No match found. Available events:"; $data.rows | ForEach-Object { Write-Host " - $($_.'Event Name')" } }
+else { $brief.PSObject.Properties | ForEach-Object { if($_.Value) { Write-Host "$($_.Name): $($_.Value)" } } }
 ```
-Then format the output as a structured deck brief and start building.
+Then format the output as a structured deck brief and start building with Aditya.
 
 ## Architecture
 ```
