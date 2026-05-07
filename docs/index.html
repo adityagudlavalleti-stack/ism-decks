@@ -48,6 +48,22 @@ body{background:#0e0e0e;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFo
 .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin-top:20px}
 .empty-state{text-align:center;padding:60px 20px;color:#555;grid-column:1/-1}
 .empty-icon{font-size:48px;margin-bottom:12px}
+.filter-bar{padding:16px 28px;background:#0e0e0e;border-bottom:1px solid #2a2a2a;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filter-search{background:#111;border:1px solid #2a2a2a;color:#e0e0e0;padding:8px 12px;border-radius:4px;font-size:13px;outline:none;width:220px}
+.filter-search:focus{border-color:#C9A84C}
+.filter-pill{padding:5px 12px;border-radius:20px;border:1px solid #333;background:#111;color:#777;font-size:11px;font-weight:700;cursor:pointer;transition:all .18s}
+.filter-pill.on{background:#1C1507;border-color:#C9A84C;color:#C9A84C}
+.filter-sep{width:1px;height:20px;background:#2a2a2a;margin:0 4px}
+.sort-sel{background:#111;border:1px solid #2a2a2a;color:#888;padding:6px 10px;border-radius:4px;font-size:11px;outline:none;cursor:pointer}
+.sort-sel:focus{border-color:#C9A84C}
+.pri-badge{padding:2px 7px;border-radius:3px;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.pri-urgent{background:#3a0a0a;color:#e74c3c;border:1px solid #e74c3c}
+.pri-high{background:#1a1007;color:#e67e22;border:1px solid #e67e22}
+.pri-normal{background:#1C1507;color:#C9A84C;border:1px solid #C9A84C}
+.pri-low{background:#1a1a1a;color:#555;border:1px solid #333}
+.deadline-urgent{background:#3a0a0a;border:1px solid #e74c3c;color:#e74c3c;font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;margin-top:6px;display:inline-block}
+.assigned-badge{font-size:10px;color:#4A9FD4;margin-top:4px}
+.card-approval{font-size:10px;color:#27ae60;margin-top:4px}
 
 .event-card{background:#161616;border:1px solid #2a2a2a;border-radius:6px;padding:18px;transition:border-color .2s,transform .15s}
 .event-card:hover{border-color:#C9A84C;transform:translateY(-2px)}
@@ -204,6 +220,17 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
 .del-box p{font-size:12px;color:#888;margin-bottom:24px;line-height:1.6}
 .del-actions{display:flex;gap:8px;justify-content:center}
 
+#preview-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:700;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+#preview-overlay.open{display:flex}
+.preview-box{background:#161616;border-top:4px solid #C9A84C;border-radius:8px;width:100%;max-width:700px;padding:32px;margin:auto}
+.preview-box h2{font-size:18px;font-weight:900;color:#fff;margin-bottom:4px}
+.preview-subtitle{font-size:11px;color:#555;margin-bottom:24px}
+.preview-section{margin-bottom:20px}
+.preview-section-title{font-size:10px;letter-spacing:2px;color:#C9A84C;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #2a2a2a}
+.preview-row{display:flex;gap:8px;margin-bottom:6px;font-size:13px}
+.preview-label{color:#555;min-width:160px;flex-shrink:0}
+.preview-val{color:#e0e0e0;flex:1;line-height:1.5}
+.preview-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid #2a2a2a}
 .submit-area{background:#161616;border:1px solid #2a2a2a;border-top:3px solid #C9A84C;border-radius:6px;padding:24px;margin-top:8px;text-align:center}
 .submit-area h3{font-size:14px;font-weight:800;color:#fff;margin-bottom:6px}
 .submit-area p{font-size:12px;color:#555;margin-bottom:18px}
@@ -252,10 +279,28 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
       </div>
     </div>
     <div class="header-actions">
+      <button class="btn btn-ghost" onclick="exportAllCSV()">↓ Export CSV</button>
       <button class="btn btn-ghost" onclick="openDef()">⚙ ISM Defaults</button>
       <button class="btn btn-outline" onclick="openAdd()">+ Add Event</button>
     </div>
   </header>
+  <div class="filter-bar">
+    <input class="filter-search" id="filter-search" placeholder="Search events…" oninput="applyFilters()">
+    <div class="filter-sep"></div>
+    <span class="filter-pill on" data-status="all" onclick="setStatusFilter(this)">All</span>
+    <span class="filter-pill" data-status="ns" onclick="setStatusFilter(this)">Not Started</span>
+    <span class="filter-pill" data-status="ip" onclick="setStatusFilter(this)">In Progress</span>
+    <span class="filter-pill" data-status="sub" onclick="setStatusFilter(this)">Submitted</span>
+    <span class="filter-pill" data-status="dl" onclick="setStatusFilter(this)">Delivered</span>
+    <div class="filter-sep"></div>
+    <select class="sort-sel" id="sort-sel" onchange="applyFilters()">
+      <option value="deadline">Sort: Deadline</option>
+      <option value="status">Sort: Status</option>
+      <option value="edited">Sort: Last Edited</option>
+      <option value="name">Sort: Name A–Z</option>
+      <option value="priority">Sort: Priority</option>
+    </select>
+  </div>
   <div class="stats-bar">
     <div class="stat-item stat-total"><div class="stat-num" id="sn-total">0</div><div class="stat-label">Total</div></div>
     <div class="stat-item stat-ns"><div class="stat-num" id="sn-ns">0</div><div class="stat-label">Not Started</div></div>
@@ -284,10 +329,34 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
   <div class="form-body">
     <div class="autosave-badge" id="autosave-badge">✓ Auto-saved</div>
 
-    <div class="deck-link-section">
+    <div class="deck-link-section" style="flex-wrap:wrap;gap:10px">
       <span class="dlbl">📎 Finished Deck Link</span>
-      <input type="url" id="f-decklink" placeholder="Paste Google Slides / OneDrive / Dropbox link once deck is built">
+      <input type="url" id="f-decklink" placeholder="Paste Google Slides / OneDrive / Dropbox link once deck is built" style="flex:1;min-width:200px">
       <a id="open-deck-link" href="#" target="_blank" style="display:none">Open ↗</a>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#888;flex-shrink:0;cursor:pointer">
+        <input type="checkbox" id="f-clientapproved" style="accent-color:#27ae60"> Client Approved
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px">
+        <div class="flabel" style="margin-bottom:6px">Priority</div>
+        <select class="fsel" id="f-priority">
+          <option value="">— Select —</option>
+          <option value="urgent">🔴 Urgent</option>
+          <option value="high">🟠 High</option>
+          <option value="normal">🟡 Normal</option>
+          <option value="low">⚪ Low</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:160px">
+        <div class="flabel" style="margin-bottom:6px">Assigned To</div>
+        <input class="fi" id="f-assignedto" placeholder="Team member building this deck">
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div class="flabel" style="margin-bottom:6px">Previous Deck Reference</div>
+        <input class="fi" id="f-prevdeck" placeholder="Link to a past ISM deck for reference" onblur="validateURL(this,'err-prevdeck')">
+        <div class="field-error" id="err-prevdeck">Enter a valid URL starting with https://</div>
+      </div>
     </div>
 
     <div class="form-section sec1">
@@ -535,6 +604,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
           </div>
         </div>
         <div class="fg"><div class="flabel">Logos, team names, or partners to avoid</div><input class="fi" id="f-logoavoid" placeholder="e.g. Competitor logos, unlicensed marks"></div>
+        <div class="fg"><div class="flabel">Event Brand Assets (logos, photos, guidelines)</div><input class="fi" id="f-brandassets" placeholder="https://drive.google.com/... or Dropbox link" onblur="validateURL(this,'err-brandassets')"><div class="field-error" id="err-brandassets">Enter a valid URL starting with https://</div></div>
       </div>
     </div>
 
@@ -621,6 +691,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
         </div>
         <div class="frow">
           <div class="fg"><div class="flabel">Email <span class="req">*</span> <span class="def-tag" id="dt-cemail">DEFAULT</span></div><input class="fi" id="f-cemail" type="email" placeholder="email@company.com" onblur="validateEmail(this)" oninput="validateEmail(this)"><div class="field-error" id="err-cemail">Enter a valid email address (e.g. name@company.com)</div></div>
+          <div class="fg"><div class="flabel">Client Email (for deck delivery)</div><input class="fi" id="f-clientemail" type="email" placeholder="client@theircompany.com" onblur="validateEmail(this)" oninput="validateEmail(this)"><div class="field-error" id="err-clientemail">Enter a valid email address</div></div>
           <div class="fg"><div class="flabel">Phone <span class="def-tag" id="dt-cphone">DEFAULT</span></div><input class="fi" id="f-cphone" placeholder="+1 (___) ___-____" oninput="formatPhone(this)" onblur="validatePhone(this)"><div class="field-error" id="err-cphone">Enter a valid phone number</div></div>
         </div>
         <div class="frow">
@@ -666,6 +737,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
       <p>Sends the brief to ISM for the deck build. Required fields must be filled first.</p>
       <div class="submit-actions">
         <button class="btn btn-ghost" onclick="markDelivered()">✓ Mark Deck Delivered</button>
+        <button class="btn btn-outline" onclick="openPreview()">👁 Preview Brief</button>
         <button class="btn btn-gold" onclick="submitBrief()">✉ Submit Brief</button>
       </div>
     </div>
@@ -748,6 +820,18 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
   </div>
 </div>
 
+<div id="preview-overlay">
+  <div class="preview-box">
+    <h2 id="prev-title">Brief Preview</h2>
+    <div class="preview-subtitle">Read-only summary of all filled fields</div>
+    <div id="prev-content"></div>
+    <div class="preview-actions">
+      <button class="btn btn-ghost" onclick="closePreview()">← Back to Edit</button>
+      <button class="btn btn-gold" onclick="closePreview();submitBrief()">✉ Submit Brief</button>
+    </div>
+  </div>
+</div>
+
 <div id="del-overlay">
   <div class="del-box">
     <h3>Delete Event?</h3>
@@ -797,46 +881,95 @@ function init(){
 }
 window.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('ism_auth')==='1')init()});
 
-function renderDash(){
-  const ids=Object.keys(EVS);
-  const ns=ids.filter(i=>EVS[i].status==='ns').length;
-  const ip=ids.filter(i=>EVS[i].status==='ip').length;
-  const sub=ids.filter(i=>EVS[i].status==='sub').length;
-  const dl=ids.filter(i=>EVS[i].status==='dl').length;
-  document.getElementById('sn-total').textContent=ids.length;
+let _statusFilter='all';
+function setStatusFilter(el){
+  document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  _statusFilter=el.dataset.status;
+  applyFilters();
+}
+function applyFilters(){
+  const q=(document.getElementById('filter-search')?.value||'').toLowerCase();
+  const sort=document.getElementById('sort-sel')?.value||'deadline';
+  const priOrder={urgent:0,high:1,normal:2,low:3,'':4};
+  const statusOrder={ip:0,sub:1,dl:2,ns:3};
+  let ids=Object.keys(EVS);
+  if(_statusFilter!=='all')ids=ids.filter(i=>EVS[i].status===_statusFilter);
+  if(q)ids=ids.filter(i=>EVS[i].name.toLowerCase().includes(q));
+  ids.sort((a,b)=>{
+    const ea=EVS[a],eb=EVS[b];
+    if(sort==='deadline'){const da=ea.data?.deadline||'9999',db=eb.data?.deadline||'9999';return da<db?-1:da>db?1:0}
+    if(sort==='status')return(statusOrder[ea.status]||9)-(statusOrder[eb.status]||9);
+    if(sort==='edited')return(eb.lastEdit||0)-(ea.lastEdit||0);
+    if(sort==='name')return ea.name.localeCompare(eb.name);
+    if(sort==='priority')return(priOrder[ea.data?.priority||''])-(priOrder[eb.data?.priority||'']);
+    return 0;
+  });
+  const allIds=Object.keys(EVS);
+  const ns=allIds.filter(i=>EVS[i].status==='ns').length;
+  const ip=allIds.filter(i=>EVS[i].status==='ip').length;
+  const sub=allIds.filter(i=>EVS[i].status==='sub').length;
+  const dl=allIds.filter(i=>EVS[i].status==='dl').length;
+  document.getElementById('sn-total').textContent=allIds.length;
   document.getElementById('sn-ns').textContent=ns;
   document.getElementById('sn-ip').textContent=ip;
   document.getElementById('sn-sub').textContent=sub;
   document.getElementById('sn-dl').textContent=dl;
   const g=document.getElementById('events-grid');
-  if(!ids.length){g.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><p>No events yet. Click <strong>+ Add Event</strong> to get started.</p></div>';return}
-  // sort: in-progress first, then submitted, then delivered, then not started
-  const order={ip:0,sub:1,dl:2,ns:3};
-  ids.sort((a,b)=>(order[EVS[a].status]||9)-(order[EVS[b].status]||9));
+  if(!ids.length){g.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><p>'+(allIds.length?'No events match your filter.':'No events yet. Click <strong>+ Add Event</strong> to get started.')+'</p></div>';return}
   g.innerHTML=ids.map(id=>{
-    const ev=EVS[id],{pct,filled}=calcPct(ev.data||{});
+    const ev=EVS[id],d=ev.data||{},{pct,filled}=calcPct(d);
     const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dl:'Deck Delivered'}[ev.status]||'Not Started';
     const scls={ns:'s-ns',ip:'s-ip',sub:'s-sub',dl:'s-dl'}[ev.status]||'s-ns';
     const barCls=ev.status==='dl'?'delivered':(ev.status==='sub'?'done':'');
     const noteCount=(ev.notes||[]).length;
     const lastEdit=ev.lastEdit?`Edited ${timeAgo(ev.lastEdit)}`:`Created ${ev.created}`;
-    const deckLink=ev.data?.decklink?`<div class="deck-link-row">📎 <a href="${esc(ev.data.decklink)}" target="_blank">${esc(shortUrl(ev.data.decklink))}</a></div>`:'';
-    const noteIndicator=noteCount?`<div class="notes-indicator">📝 ${noteCount} team note${noteCount>1?'s':''}</div>`:'';
+    const deckLink=d.decklink?`<div class="deck-link-row">📎 <a href="${esc(d.decklink)}" target="_blank">${esc(shortUrl(d.decklink))}</a></div>`:'';
+    const noteInd=noteCount?`<div class="notes-indicator">📝 ${noteCount} note${noteCount>1?'s':''}</div>`:'';
+    const priMap={urgent:'pri-urgent',high:'pri-high',normal:'pri-normal',low:'pri-low'};
+    const priLabel={urgent:'Urgent',high:'High',normal:'Normal',low:'Low'};
+    const priBadge=d.priority?`<span class="pri-badge ${priMap[d.priority]}">${priLabel[d.priority]}</span>`:'';
+    const assignedBadge=d.assignedto?`<div class="assigned-badge">👤 ${esc(d.assignedto)}</div>`:'';
+    const approvedBadge=d.clientapproved?`<div class="card-approval">✓ Client Approved</div>`:'';
+    const urgency=deadlineUrgency(d.deadline);
+    const urgencyBadge=urgency?`<div class="deadline-urgent">⚠ Due in ${urgency} day${urgency===1?'':'s'}</div>`:'';
     return`<div class="event-card">
       <div class="event-card-top">
-        <div><div class="event-card-name">${esc(ev.name)}</div><div class="event-card-date">${lastEdit}</div></div>
+        <div><div class="event-card-name">${esc(ev.name)} ${priBadge}</div><div class="event-card-date">${lastEdit}</div></div>
         <span class="status-badge ${scls}">${slbl}</span>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill ${barCls}" style="width:${pct}%"></div></div>
       <div class="event-card-meta"><span>${filled}/11 sections</span><span>${pct}%</span></div>
-      ${deckLink}
-      ${noteIndicator}
+      ${urgencyBadge}${deckLink}${assignedBadge}${approvedBadge}${noteInd}
       <div class="event-card-actions">
-        <button class="btn btn-outline btn-sm" style="flex:1" onclick="openEv('${id}')">Open Brief →</button>
-        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();promptDel('${id}')">✕</button>
+        <button class="btn btn-outline btn-sm" style="flex:1" onclick="openEv('${id}')">Open →</button>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();duplicateEv('${id}')" title="Duplicate">⧉</button>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();promptDel('${id}')" title="Delete">✕</button>
       </div>
     </div>`;
   }).join('');
+}
+function renderDash(){applyFilters()}
+
+function deadlineUrgency(dl){
+  if(!dl)return null;
+  const days=Math.ceil((new Date(dl)-new Date())/(1000*60*60*24));
+  return(days>=0&&days<=7)?days:null;
+}
+
+function duplicateEv(id){
+  const src=EVS[id];
+  const newId='ev'+Date.now();
+  EVS[newId]={
+    name:src.name+' (Copy)',
+    status:'ns',
+    created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    lastEdit:Date.now(),
+    data:{...JSON.parse(JSON.stringify(src.data||{}))},
+    notes:[]
+  };
+  save();renderDash();
+  toast(`Duplicated "${src.name}"`, 'toast-gold');
 }
 
 function calcPct(d){
@@ -909,12 +1042,13 @@ function backToDash(){
   renderDash();
 }
 
-const TF=['evname','loc','date','sport','prog','budget','relationship','decdate','special','decmaker','attend','count','explvl','for','sensit','primgoal','competitors','belief','cta','story','points','phrases','avoid','wow','journey','moments','ismmgd','access','colors','feel','refs','logoavoid','testimonials','roi','decklist','format','cname','company','cemail','cphone','website','deadline','finalcontact','extra','success','decklink'];
+const TF=['evname','loc','date','sport','prog','budget','relationship','decdate','special','decmaker','attend','count','explvl','for','sensit','primgoal','competitors','belief','cta','story','points','phrases','avoid','wow','journey','moments','ismmgd','access','colors','feel','refs','logoavoid','brandassets','testimonials','roi','decklist','format','cname','company','cemail','clientemail','cphone','website','deadline','finalcontact','extra','success','decklink','assignedto','prevdeck','priority'];
 const PGS=['goals','vip','style','ism','slides'];
 
 function loadForm(d){
   TF.forEach(k=>{const el=document.getElementById('f-'+k);if(el)el.value=d[k]||''});
   const gi=document.getElementById('f-genimg');if(gi){gi.checked=!!d.genimg;updateGenLbl()}
+  const ca=document.getElementById('f-clientapproved');if(ca)ca.checked=!!d.clientapproved;
   PGS.forEach(g=>{
     const vals=d[g]||[];
     document.querySelectorAll(`#pg-${g} .pill`).forEach(p=>{
@@ -938,6 +1072,7 @@ function collectForm(){
   const d={};
   TF.forEach(k=>{const el=document.getElementById('f-'+k);if(el)d[k]=el.value});
   d.genimg=document.getElementById('f-genimg')?.checked||false;
+  d.clientapproved=document.getElementById('f-clientapproved')?.checked||false;
   PGS.forEach(g=>{d[g]=Array.from(document.querySelectorAll(`#pg-${g} .pill.on`)).map(p=>p.dataset.v)});
   const at=document.querySelector('.sport-tab.on');if(at)d.sporttab=at.dataset.sport;
   return d;
@@ -1111,6 +1246,48 @@ async function markDelivered(){
 function save(){localStorage.setItem(EK,JSON.stringify(EVS))}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(msg,cls){const t=document.createElement('div');t.className=`toast ${cls}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+// ── PREVIEW ───────────────────────────────────────────
+function openPreview(){
+  saveNow();
+  const ev=EVS[CUR],d=ev.data||{};
+  document.getElementById('prev-title').textContent=ev.name;
+  const arr=v=>Array.isArray(v)?v.join(', '):(v||'');
+  const row=(lbl,val)=>val&&arr(val).trim()?`<div class="preview-row"><span class="preview-label">${lbl}</span><span class="preview-val">${esc(arr(val))}</span></div>`:'';
+  const sec=(title,rows)=>`<div class="preview-section"><div class="preview-section-title">${title}</div>${rows.filter(Boolean).join('')}</div>`;
+  document.getElementById('prev-content').innerHTML=[
+    sec('Event Overview',[row('Event Name',d.evname),row('Location',d.loc),row('Date',d.date),row('Sport',d.sport),row('Program',d.prog),row('Budget Tier',d.budget),row('Relationship',d.relationship),row('Decision Date',d.decdate),row('Priority',d.priority),row('Assigned To',d.assignedto),row('Prev Deck Ref',d.prevdeck)]),
+    sec('Target Audience',[row('Decision Maker',d.decmaker),row('Attendees',d.attend),row('Guest Count',d.count),row('Experience Level',d.explvl),row('Deck For',d['for']),row('Sensitivities',d.sensit)]),
+    sec('Business Goals',[row('Objectives',d.goals),row('Primary Goal',d.primgoal),row('Competitors',d.competitors),row('Audience Belief',d.belief),row('CTA',d.cta)]),
+    sec('Core Message',[row('Main Story',d.story),row('Key Points',d.points),row('Phrases',d.phrases),row('Avoid',d.avoid)]),
+    sec('VIP Experience',[row('Wow Factor',d.wow),row('Elements',d.vip),row('Guest Journey',d.journey),row("Money-Can't-Buy",d.moments),row('ISM Managed',d.ismmgd)]),
+    sec('Event Access',[row('Specific Access',d.access)]),
+    sec('Visual Direction',[row('Style',d.style),row('Colors',d.colors),row('Feel',d.feel),row('References',d.refs),row('Brand Assets',d.brandassets),row('Generated Imagery',d.genimg?'Yes':'No'),row('Avoid',d.logoavoid)]),
+    sec('Content & Proof',[row('ISM Points',d.ism),row('Testimonials',d.testimonials),row('ROI Language',d.roi)]),
+    sec('Slide Structure',[row('Slides',d.slides),row('Deck Length',d.decklist?d.decklist+' slides':''),row('Format',d.format)]),
+    sec('Logistics & Contact',[row('Contact Name',d.cname),row('Company',d.company),row('Email',d.cemail),row('Client Email',d.clientemail),row('Phone',d.cphone),row('Website',d.website),row('Deadline',d.deadline),row('Final Contact Slide',d.finalcontact)]),
+    sec('Final Notes',[row('Additional Context',d.extra),row('Success Criteria',d.success)]),
+  ].join('');
+  document.getElementById('preview-overlay').classList.add('open');
+}
+function closePreview(){document.getElementById('preview-overlay').classList.remove('open')}
+
+// ── EXPORT ALL CSV ────────────────────────────────────
+function exportAllCSV(){
+  const ids=Object.keys(EVS);
+  if(!ids.length){toast('No events to export','toast-gold');return}
+  const headers=['Event Name','Status','Priority','Assigned To','Created','Last Edited','Sections Complete','Deadline','Sport','Budget','Relationship','Decision Maker','Guest Count','Experience Level','Goals','Primary Goal','Wow Factor','Visual Style','Colors','ISM Points','Slides','Deck Length','Format','Contact Name','Company','Email','Client Email','Phone','Website','Client Approved','Deck Link'];
+  const arr=v=>Array.isArray(v)?v.join('; '):(v||'');
+  const rows=ids.map(id=>{
+    const ev=EVS[id],d=ev.data||{},{filled}=calcPct(d);
+    const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dl:'Deck Delivered'}[ev.status]||'';
+    return[ev.name,slbl,d.priority||'',d.assignedto||'',ev.created,ev.lastEdit?new Date(ev.lastEdit).toLocaleDateString():'',`${filled}/11`,d.deadline||'',arr(d.sport),d.budget||'',d.relationship||'',d.decmaker||'',d.count||'',arr(d.explvl),arr(d.goals),d.primgoal||'',d.wow||'',arr(d.style),d.colors||'',arr(d.ism),arr(d.slides),d.decklist?d.decklist+' slides':'',arr(d.format),d.cname||'',d.company||'',d.cemail||'',d.clientemail||'',d.cphone||'',d.website||'',d.clientapproved?'Yes':'No',d.decklink||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv=[headers.map(h=>`"${h}"`).join(','),...rows].join('\n');
+  const dt=new Date().toISOString().split('T')[0];
+  dl(`ISM_All_Events_${dt}.csv`,csv,'text/csv');
+  toast(`Exported ${ids.length} events`,'toast-gold');
+}
 
 // ── VALIDATION ────────────────────────────────────────
 function showErr(errId,show){const e=document.getElementById(errId);if(e)e.classList.toggle('show',show)}
