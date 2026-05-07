@@ -1275,8 +1275,14 @@ async function submitBrief(){
     notesCount:(ev.notes||[]).length,
     data:ev.data
   });
-  EVS[CUR].status='sub';save();refreshDots();pushToSheet(CUR);
-  toast('✓ Brief submitted to ISM team','toast-green');
+  EVS[CUR].status='sub';save();refreshDots();
+  // Push to Live Data (status update) + write clean row to Submitted Briefs tab
+  const ev=EVS[CUR];
+  if(SHEET_URL){
+    fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'submit',id:CUR,name:ev.name,status:'Submitted',created:ev.created,lastEdit:ev.lastEdit||Date.now(),data:ev.data||{},notes:ev.notes||[],notesCount:(ev.notes||[]).length})});
+  }
+  toast('✓ Brief submitted — written to Submitted Briefs tab','toast-green');
 }
 
 async function markDelivered(){
