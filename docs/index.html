@@ -1095,18 +1095,19 @@ function openEv(id){
   document.getElementById('fh-name').textContent=ev.name;
   document.getElementById('view-dashboard').classList.add('hidden');
   document.getElementById('view-form').classList.add('active');
-  loadForm(ev.data||{});
-  renderNotes();
+  loadForm(typeof ev.data==='string'?JSON.parse(ev.data||'{}'):ev.data||{});
+  try{renderNotes();}catch(e){console.error('renderNotes failed',e)}
   buildDots();refreshDots();refreshChecks();
   attachSave();
   window.scrollTo(0,0);
 }
 function backToDash(){
-  saveNow();
+  try{saveNow();}catch(e){console.error('saveNow failed',e)}
   CUR=null;
   document.getElementById('view-dashboard').classList.remove('hidden');
   document.getElementById('view-form').classList.remove('active');
   renderDash();
+  if(!Object.keys(EVS).length)syncFromSheet();
 }
 
 const TF=['evname','loc','date','sport','prog','budget','relationship','decdate','special','decmaker','attend','count','explvl','for','sensit','primgoal','competitors','belief','cta','story','points','phrases','avoid','wow','journey','moments','ismmgd','access','colors','feel','refs','logoavoid','brandassets','testimonials','roi','decklist','format','cname','company','cemail','clientemail','cphone','website','deadline','finalcontact','extra','success','decklink','assignedto','prevdeck','priority'];
