@@ -899,7 +899,7 @@ async function syncFromSheet(){
       let changed=false;
       Object.entries(json.events).forEach(([id,shEv])=>{
         const loc=EVS[id];
-        if(!loc||(Number(shEv.lastEdit)||0)>(Number(loc.lastEdit)||0)){EVS[id]=shEv;changed=true}
+        if(!loc||(Number(shEv.lastEdit)||0)>(Number(loc.lastEdit)||0)){if(typeof shEv.data==='string')try{shEv.data=JSON.parse(shEv.data)}catch{}if(typeof shEv.notes==='string')try{shEv.notes=JSON.parse(shEv.notes)}catch{}EVS[id]=shEv;changed=true}
       });
       if(changed){save();renderDash()}
       setSyncState('synced','Synced ✓');
