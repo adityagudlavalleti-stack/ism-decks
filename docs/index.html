@@ -335,6 +335,7 @@ input[type="number"].fi::-webkit-inner-spin-button{opacity:.5}
       </div>
     </div>
     <div class="progress-dots" id="progress-dots"></div>
+    <span class="status-badge s-ns" id="fh-status" style="flex-shrink:0;cursor:default">Not Started</span>
     <button class="btn btn-ghost btn-sm" onclick="openDef()">⚙ Defaults</button>
   </div>
   <div class="form-body">
@@ -1014,9 +1015,17 @@ function deadlineUrgency(dl){
   return(days>=0&&days<=7)?days:null;
 }
 
+function updateFormStatus(){
+  const st=EVS[CUR]?.status||'ns';
+  const slbl={ns:'Not Started',ip:'In Progress',sub:'Submitted',dip:'🔨 Building',dl:'Deck Delivered'}[st]||'Not Started';
+  const scls={ns:'s-ns',ip:'s-ip',sub:'s-sub',dip:'s-dip',dl:'s-dl'}[st]||'s-ns';
+  const el=document.getElementById('fh-status');
+  if(el){el.textContent=slbl;el.className='status-badge '+scls}
+}
 function markDeckInProgress(){
   if(!CUR)return;
-  EVS[CUR].status='dip';save();refreshDots();pushToSheet(CUR);
+  saveNow();
+  EVS[CUR].status='dip';save();refreshDots();pushToSheet(CUR);updateFormStatus();
   toast('🔨 Marked as Deck In Progress','toast-gold');
 }
 
@@ -1097,8 +1106,11 @@ function openEv(id){
   document.getElementById('view-form').classList.add('active');
   loadForm(typeof ev.data==='string'?JSON.parse(ev.data||'{}'):ev.data||{});
   try{renderNotes();}catch(e){console.error('renderNotes failed',e)}
-  buildDots();refreshDots();refreshChecks();
+  buildDots();refreshDots();refreshChecks();updateFormStatus();
   attachSave();
+  const d=typeof ev.data==='string'?JSON.parse(ev.data||'{}'):ev.data||{};
+  const hasDefaults=(d.goals||[]).length||(d.ism||[]).length||(d.slides||[]).length||d.cname||d.cemail;
+  if(ev.status==='ns'&&hasDefaults)toast('✓ ISM defaults pre-filled — expand sections 3, 8, 9 & 10 to see them','toast-gold');
   window.scrollTo(0,0);
 }
 function backToDash(){
@@ -1159,7 +1171,7 @@ function saveNow(){
   EVS[CUR].lastEdit=Date.now();
   const{filled}=calcPct(d);
   if(filled>0&&EVS[CUR].status==='ns')EVS[CUR].status='ip';
-  save();refreshDots();refreshChecks();flashAS();
+  save();refreshDots();refreshChecks();updateFormStatus();flashAS();
   scheduleSheetSync(CUR);
 }
 function flashAS(){const b=document.getElementById('autosave-badge');b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),2200)}
@@ -1293,7 +1305,7 @@ async function submitBrief(){
     fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'submit',id:CUR,name:ev.name,status:'Submitted',created:ev.created,lastEdit:ev.lastEdit||Date.now(),data:ev.data||{},notes:ev.notes||[],notesCount:(ev.notes||[]).length})});
   }
-  EVS[CUR].status='sub';save();refreshDots();pushToSheet(CUR);
+  EVS[CUR].status='sub';save();refreshDots();pushToSheet(CUR);updateFormStatus();
   toast('✓ Brief submitted — written to Submitted Briefs tab','toast-green');
 }
 
@@ -1310,7 +1322,7 @@ async function markDelivered(){
     notesCount:(ev.notes||[]).length,
     data:ev.data
   });
-  EVS[CUR].status='dl';save();refreshDots();pushToSheet(CUR);
+  EVS[CUR].status='dl';save();refreshDots();pushToSheet(CUR);updateFormStatus();
   toast('✓ Marked as Deck Delivered','toast-purple');
 }
 
