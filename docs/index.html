@@ -872,7 +872,7 @@ async function tryUnlock(){
   if(await sha256(v)===PW){
     localStorage.setItem('ism_auth','1');
     document.getElementById('lock-screen').classList.add('hidden');
-    init();
+    init();startSync();
   }else{
     const i=document.getElementById('lock-input');
     i.classList.add('error');
@@ -888,8 +888,12 @@ function setSyncState(state,label){
   dot.className='sync-dot '+state;
   if(lbl)lbl.textContent=label;
 }
+let _syncing=false;
 async function syncFromSheet(){
   if(!SHEET_URL){setSyncState('error','Not connected');return}
+  if(_syncing)return;
+  if(localStorage.getItem('ism_auth')!=='1')return;
+  _syncing=true;
   setSyncState('syncing','Syncing…');
   try{
     const r=await fetch(SHEET_URL+'?t='+Date.now());
@@ -901,16 +905,17 @@ async function syncFromSheet(){
         const loc=EVS[id];
         if(!loc||(Number(shEv.lastEdit)||0)>(Number(loc.lastEdit)||0)){if(typeof shEv.data==='string')try{shEv.data=JSON.parse(shEv.data)}catch{}if(typeof shEv.notes==='string')try{shEv.notes=JSON.parse(shEv.notes)}catch{}EVS[id]=shEv;changed=true}
       });
-      if(changed){save();renderDash()}
+      if(changed){save();if(!CUR)renderDash()}
       setSyncState('synced','Synced ✓');
     }else throw new Error(json.error||'bad response');
   }catch(e){setSyncState('error','Offline');console.warn('Sync failed',e)}
+  finally{_syncing=false}
 }
 let _sheetTimer={};
 function scheduleSheetSync(id){
   clearTimeout(_sheetTimer[id]);
   setSyncState('syncing','Saving…');
-  _sheetTimer[id]=setTimeout(()=>pushToSheet(id),5000);
+  _sheetTimer[id]=setTimeout(()=>{pushToSheet(id);delete _sheetTimer[id]},5000);
 }
 async function pushToSheet(id){
   if(!SHEET_URL||!EVS[id])return;
@@ -934,8 +939,12 @@ function init(){
   SHEET_URL?syncFromSheet():setSyncState('error','Sheet not configured');
 }
 // Script is at end of body — DOM is ready, call init directly if authed
-if(localStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden');init();}
-setInterval(syncFromSheet,15000);
+let _syncInterval=null;
+function startSync(){
+  if(_syncInterval)clearInterval(_syncInterval);
+  _syncInterval=setInterval(syncFromSheet,15000);
+}
+if(localStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden');init();startSync();}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncFromSheet()});
 
 let _statusFilter='all';
@@ -1018,6 +1027,7 @@ function deadlineUrgency(dl){
 
 function markDeckInProgress(){
   if(!CUR)return;
+  saveNow();
   EVS[CUR].status='dip';save();refreshDots();pushToSheet(CUR);
   toast('🔨 Marked as Deck In Progress','toast-gold');
 }
@@ -1305,15 +1315,9 @@ async function markDelivered(){
   const link=document.getElementById('f-decklink')?.value;
   if(!link){if(!confirm('No deck link added yet. Mark as delivered anyway?'))return}
   saveNow();
-  toast('Updating…','toast-gold');
-  await postToSheet({
-    eventName:ev.name,
-    status:'Deck Delivered',
-    notesCount:(ev.notes||[]).length,
-    data:ev.data
-  });
   EVS[CUR].status='dl';save();refreshDots();pushToSheet(CUR);
   toast('✓ Marked as Deck Delivered','toast-purple');
+  postToSheet({eventName:ev.name,status:'Deck Delivered',notesCount:(ev.notes||[]).length,data:ev.data});
 }
 
 function save(){localStorage.setItem(EK,JSON.stringify(EVS))}
