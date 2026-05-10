@@ -935,6 +935,8 @@ function init(){
 }
 // Script is at end of body — DOM is ready, call init directly if authed
 if(localStorage.getItem('ism_auth')==='1'){document.getElementById('lock-screen').classList.add('hidden');init();}
+setInterval(syncFromSheet,15000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncFromSheet()});
 
 let _statusFilter='all';
 function setStatusFilter(el){
